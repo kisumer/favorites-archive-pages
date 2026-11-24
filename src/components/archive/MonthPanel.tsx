@@ -35,7 +35,7 @@ export const MonthPanel = forwardRef<
 >(function MonthPanel({ year, category, month, onMonth }, ref) {
   const { apply, images } = useArchive();
   const confirm = useConfirm();
-  const ids = { name: useId(), caption: useId(), from: useId(), to: useId() };
+  const ids = { name: useId(), from: useId(), to: useId() };
   const [rangeOpen, setRangeOpen] = useState(false);
   const [rangeStart, setRangeStart] = useState(month + 1);
   const [rangeEnd, setRangeEnd] = useState(11);
@@ -199,19 +199,6 @@ export const MonthPanel = forwardRef<
               maxLength={LIMITS.pickName}
               onChange={(e) => update({ name: e.target.value })}
               placeholder="예: 카리나"
-              className={cn(inputClass, "h-11")}
-            />
-          </div>
-          <div>
-            <FieldLabel htmlFor={ids.caption} hint="선택">
-              한 줄 메모
-            </FieldLabel>
-            <input
-              id={ids.caption}
-              value={pick.caption}
-              maxLength={LIMITS.caption}
-              onChange={(e) => update({ caption: e.target.value })}
-              placeholder="예: 첫 콘서트 다녀온 달"
               className={cn(inputClass, "h-11")}
             />
           </div>

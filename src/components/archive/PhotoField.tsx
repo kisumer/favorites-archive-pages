@@ -1,8 +1,10 @@
 import { ImagePlus, Loader2, RefreshCw, Trash2 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants, Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DEFAULT_PHOTO_CROP, getPhotoCrop, validatePhoto } from "@/lib/archive/image";
 import { cn } from "@/lib/utils";
 import { useArchive } from "./ArchiveProvider";
 
@@ -26,20 +28,45 @@ export function PhotoField({
   const { images, addImageFromFile } = useArchive();
   const inputId = useId();
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ file: File; url: string } | null>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [crop, setCrop] = useState(DEFAULT_PHOTO_CROP);
   const src = imageId ? images[imageId] : undefined;
 
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => () => {
+    if (pending) URL.revokeObjectURL(pending.url);
+  }, [pending]);
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setBusy(true);
-    const id = await addImageFromFile(file);
-    setBusy(false);
-    if (id) {
-      onChange(id);
-      toast.success("사진을 넣었어요");
+    try {
+      validatePhoto(file);
+      setDimensions(null);
+      setCrop(DEFAULT_PHOTO_CROP);
+      setPending({ file, url: URL.createObjectURL(file) });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "사진을 열 수 없어요.");
     }
   };
+
+  const saveCrop = async () => {
+    if (!pending || !dimensions || busy) return;
+    setBusy(true);
+    try {
+      const id = await addImageFromFile(pending.file, crop);
+      if (id) {
+        onChange(id);
+        setPending(null);
+        toast.success("사진을 넣었어요");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const area = dimensions && getPhotoCrop(dimensions.width, dimensions.height, crop);
 
   const box = size === "lg" ? "h-36 w-36 sm:h-40 sm:w-40" : "h-24 w-24";
 
@@ -95,6 +122,66 @@ export function PhotoField({
           </p>
         )}
       </div>
+      <Dialog open={!!pending} onOpenChange={(open) => !open && !busy && setPending(null)}>
+        {pending && (
+          <DialogContent className="max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-md overflow-y-auto rounded-3xl border-2 border-ink p-5 shadow-pop-lg">
+            <DialogHeader className="pr-10">
+              <DialogTitle>사진 위치 조정</DialogTitle>
+              <DialogDescription>정사각형 안에 들어갈 부분을 골라 주세요.</DialogDescription>
+            </DialogHeader>
+            <div className="relative mx-auto aspect-square w-full max-w-56 overflow-hidden rounded-2xl border-2 border-ink bg-paper-deep">
+              <img
+                src={pending.url}
+                alt="사진 자르기 미리보기"
+                className="absolute max-w-none"
+                style={area && dimensions ? {
+                  width: `${dimensions.width / area.side * 100}%`,
+                  height: `${dimensions.height / area.side * 100}%`,
+                  left: `${-area.left / area.side * 100}%`,
+                  top: `${-area.top / area.side * 100}%`,
+                } : { visibility: "hidden" }}
+                onLoad={(e) => setDimensions({
+                  width: e.currentTarget.naturalWidth,
+                  height: e.currentTarget.naturalHeight,
+                })}
+                onError={() => {
+                  setPending(null);
+                  toast.error("이 사진을 열 수 없어요. JPG나 PNG 사진으로 다시 시도해 주세요.");
+                }}
+              />
+            </div>
+            <div className="grid gap-1" aria-label="사진 조정">
+              {([
+                ["zoom", "확대", 1, 3],
+                ["x", "가로 위치", 0, 1],
+                ["y", "세로 위치", 0, 1],
+              ] as const).map(([key, title, min, max]) => (
+                <label key={key} className="flex min-h-9 items-center gap-3 text-sm font-bold">
+                  <span className="w-16 shrink-0">{title}</span>
+                  <input
+                    type="range"
+                    className="min-h-9 min-w-0 flex-1 accent-ink"
+                    min={min}
+                    max={max}
+                    step={0.01}
+                    value={crop[key]}
+                    onChange={(e) => setCrop((current) => ({ ...current, [key]: e.target.valueAsNumber }))}
+                    disabled={!dimensions || busy ||
+                      (key === "x" && area?.side === dimensions.width) ||
+                      (key === "y" && area?.side === dimensions.height)}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" disabled={busy} onClick={() => setPending(null)}>취소</Button>
+              <Button variant="popInk" className="flex-1" disabled={!dimensions || busy} onClick={() => void saveCrop()}>
+                {busy ? "저장 중…" : "이대로 사용"}
+              </Button>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }

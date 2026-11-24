@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { compressImage } from "@/lib/archive/image";
+import { compressImage, type PhotoCrop } from "@/lib/archive/image";
 import { collectImageIds, createDefaultState, normalizeState, uid } from "@/lib/archive/model";
 import {
   isQuotaError,
@@ -23,7 +23,7 @@ interface ArchiveContextValue {
   saveStatus: SaveStatus;
   /** Apply a pure update. Shows the error as a toast and returns false when it fails. */
   apply: (fn: Updater, opts?: { silent?: boolean }) => boolean;
-  addImageFromFile: (file: File) => Promise<string | null>;
+  addImageFromFile: (file: File, crop: PhotoCrop) => Promise<string | null>;
   replaceAll: (state: ArchiveState, images: Record<string, string>) => Promise<boolean>;
   resetAll: () => Promise<void>;
 }
@@ -160,12 +160,12 @@ export function ArchiveProvider({
     return true;
   }, []);
 
-  const addImageFromFile = useCallback(async (file: File) => {
+  const addImageFromFile = useCallback(async (file: File, crop: PhotoCrop) => {
     const store = storeRef.current;
     if (!store) return null;
     let data: string;
     try {
-      data = await compressImage(file);
+      data = await compressImage(file, crop);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "사진을 처리하지 못했어요.");
       return null;
