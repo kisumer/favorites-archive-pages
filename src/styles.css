@@ -1,0 +1,185 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * 최애 아카이브 design system — "scrapbook editorial".
+ * Off-white paper, ink outlines, pastel sticker accents, hard offset "pop" shadows.
+ */
+
+@theme inline {
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-serif: "Noto Serif KR", "Nanum Myeongjo", AppleMyungjo, serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 14px);
+  --radius-4xl: calc(var(--radius) + 20px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-pink: var(--pink);
+  --color-coral: var(--coral);
+  --color-lemon: var(--lemon);
+  --color-mint: var(--mint);
+  --color-sky: var(--sky);
+  --color-lilac: var(--lilac);
+
+  --color-chart-1: var(--pink);
+  --color-chart-2: var(--mint);
+  --color-chart-3: var(--sky);
+  --color-chart-4: var(--lemon);
+  --color-chart-5: var(--coral);
+  --color-sidebar: var(--paper);
+  --color-sidebar-foreground: var(--ink);
+  --color-sidebar-primary: var(--ink);
+  --color-sidebar-primary-foreground: var(--paper);
+  --color-sidebar-accent: var(--paper-deep);
+  --color-sidebar-accent-foreground: var(--ink);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
+
+  --shadow-pop: 3px 3px 0 0 var(--ink);
+  --shadow-pop-lg: 6px 6px 0 0 var(--ink);
+  --shadow-soft: 0 18px 40px -20px color-mix(in oklab, var(--ink) 35%, transparent);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-spin-slow: spin 18s linear infinite;
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+}
+
+:root {
+  --radius: 1rem;
+
+  --paper: oklch(0.987 0.008 90);
+  --paper-deep: oklch(0.955 0.016 85);
+  --ink: oklch(0.2 0.014 290);
+  --pink: oklch(0.84 0.1 355);
+  --coral: oklch(0.79 0.12 35);
+  --lemon: oklch(0.94 0.13 105);
+  --mint: oklch(0.89 0.09 165);
+  --sky: oklch(0.85 0.08 245);
+  --lilac: oklch(0.8 0.1 300);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--lemon);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-deep);
+  --muted-foreground: oklch(0.5 0.02 290);
+  --accent: oklch(0.95 0.035 355);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.58 0.21 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.88 0.015 85);
+  --input: oklch(0.84 0.018 85);
+  --ring: var(--ink);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--pink);
+    color: var(--ink);
+  }
+}
+
+@utility paper-dots {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--ink) 9%, transparent) 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+}
+
+@utility outline-ink {
+  border: 2px solid var(--ink);
+}
+
+@utility dashed-ink {
+  border: 2px dashed var(--ink);
+}
+
+@utility pressable {
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 0 var(--ink);
+  }
+}
+
+@utility safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
