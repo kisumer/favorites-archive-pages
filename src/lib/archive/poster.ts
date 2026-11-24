@@ -662,7 +662,7 @@ export function drawPoster(
   getImage: ImageGetter,
 ) {
   const st = STYLES[theme];
-  ctx.fillStyle = "#f2f2f2";
+  ctx.fillStyle = "#fbfbfb";
   ctx.fillRect(0, 0, L.width, L.height);
   drawHeader(ctx, L, year, theme);
 

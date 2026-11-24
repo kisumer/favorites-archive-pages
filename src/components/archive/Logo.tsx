@@ -52,12 +52,7 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <LogoMark className="h-9 w-9 text-[28px]" />
-      <span className="leading-none">
-        <span className="block text-[17px] font-black tracking-tight">최애 아카이브</span>
-        <span className="block text-[10px] font-bold tracking-[0.18em] text-muted-foreground">
-          연말결산 제작소
-        </span>
-      </span>
+      <span className="text-[17px] font-black leading-none tracking-tight">최애 아카이브</span>
     </span>
   );
 }
