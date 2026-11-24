@@ -274,7 +274,7 @@ function solid(ctx: Ctx, width: number) {
 
 function setPosterFont(ctx: Ctx, weight: number, size: number, family = FONT_SANS) {
   ctx.font = font(weight, size, family);
-  if ("letterSpacing" in ctx) ctx.letterSpacing = `${size * -0.025}px`;
+  if ("letterSpacing" in ctx) ctx.letterSpacing = `${(size * -0.025).toFixed(3)}px`;
 }
 
 function setTitleFont(ctx: Ctx, size: number, theme: ThemeId) {
@@ -314,7 +314,7 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     const nameFamily = STYLES[theme].display;
     setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
     const maxNameW = theme === "kitsch" ? COVER - 32 : COVER;
-    while (ctx.measureText(nameText).width > maxNameW && nameSize > 15) {
+    while (ctx.measureText(nameText).width > maxNameW && nameSize > 10) {
       nameSize -= 1;
       setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
     }
@@ -506,12 +506,7 @@ function drawCover(
     ctx.textAlign = "center";
     setPosterFont(ctx, 400, CL.nameSize, st.display);
     const ink = centeredInk(ctx, CL.nameText);
-    const scale = Math.min(1, (w - 26) / Math.max(1, ink.width));
-    ctx.save();
-    ctx.translate(x + w / 2, y + h / 2);
-    ctx.scale(scale, 1);
-    ctx.fillText(CL.nameText, ink.offsetX, ink.offsetY);
-    ctx.restore();
+    ctx.fillText(CL.nameText, x + w / 2 + ink.offsetX, y + h / 2 + ink.offsetY);
   } else {
     ctx.fillStyle = st.ink;
     ctx.textAlign = "left";
