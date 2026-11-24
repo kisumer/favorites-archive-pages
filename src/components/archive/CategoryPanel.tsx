@@ -139,7 +139,7 @@ export function CategoryPanel({
                   value={category.name}
                   maxLength={LIMITS.categoryName}
                   onChange={(e) => apply((s) => updateCategory(s, year.year, category.id, { name: e.target.value }))}
-                  placeholder="예: 문개박사"
+                  placeholder="예: 수양"
                   className={cn(inputClass, "h-11")}
                 />
               </div>
