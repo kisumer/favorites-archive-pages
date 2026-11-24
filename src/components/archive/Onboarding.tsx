@@ -58,7 +58,7 @@ export function Onboarding({
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : finish())}>
       <DialogContent className="max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-md overflow-y-auto rounded-3xl border-2 border-ink p-5 shadow-pop-lg">
-        <div className="flex items-center gap-2" aria-hidden="true">
+        <div className="mr-9 mt-1 flex items-center gap-2" aria-hidden="true">
           {[1, 2].map((n) => (
             <span
               key={n}
