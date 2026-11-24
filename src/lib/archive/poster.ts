@@ -69,7 +69,7 @@ interface Style {
 const INK = "#1B1A22";
 const STYLES: Record<ThemeId, Style> = {
   kitsch: {
-    paper: "#FFFDF8",
+    paper: "#fafafa",
     ink: INK,
     muted: "#77717F",
     display: FONT_SANS,
@@ -78,9 +78,9 @@ const STYLES: Record<ThemeId, Style> = {
     stroke: 3,
   },
   editorial: {
-    paper: "#F6F4EF",
+    paper: "#f2f2f2",
     ink: INK,
-    muted: "#6F6B66",
+    muted: "#6d6d6d",
     display: FONT_SERIF,
     coverRadius: 6,
     cardRadius: 4,
@@ -277,11 +277,11 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
   const st = STYLES[theme];
   let y = 76;
   const kickerY = y;
-  y += 34 + 30;
+  if (theme === "editorial") y += 34 + 30;
   const title = defaultTitle(year);
-  let titleSize = 88;
+  let titleSize = theme === "kitsch" ? 112 : 88;
   ctx.font = font(900, titleSize, st.display);
-  while (ctx.measureText(title).width > POSTER_W - PAD_X * 2 - 220 && titleSize > 40) {
+  while (ctx.measureText(title).width > POSTER_W - PAD_X * 2 - 32 && titleSize > 40) {
     titleSize -= 4;
     ctx.font = font(900, titleSize, st.display);
   }
@@ -383,15 +383,6 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
-    const kicker = "MY FAVORITES ARCHIVE";
-    ctx.font = font(800, 14);
-    const kw = ctx.measureText(kicker).width + 40;
-    roundRectPath(ctx, { x: cx - kw / 2, y: L.kickerY, w: kw, h: 34 }, 17);
-    ctx.fillStyle = st.ink;
-    ctx.fill();
-    ctx.fillStyle = "#FFF07A";
-    ctx.fillText(kicker, cx, L.kickerY + 18);
-
     ctx.font = font(900, L.titleSize, st.display);
     const tw = ctx.measureText(L.title).width;
     // highlighter swipe behind title
@@ -407,7 +398,6 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.restore();
     ctx.fillStyle = st.ink;
     ctx.fillText(L.title, cx, L.titleY);
-
   } else {
     ctx.strokeStyle = st.ink;
     solid(ctx, 1.5);
@@ -449,7 +439,7 @@ function drawCover(
   const img = c.coverImageId ? getImage(c.coverImageId) : null;
   ctx.save();
   roundRectPath(ctx, r, st.coverRadius);
-  ctx.fillStyle = theme === "kitsch" ? tint(c.color, 0.55) : "#E9E5DD";
+  ctx.fillStyle = theme === "kitsch" ? tint(c.color, 0.55) : "#e8e8e8";
   ctx.fill();
   ctx.clip();
   if (img) {
@@ -549,8 +539,8 @@ function drawCell(
 
   ctx.save();
   roundRectPath(ctx, r, st.cardRadius);
-  if (theme === "kitsch") ctx.fillStyle = named ? tint(c.color, 0.45) : "#F7F3EA";
-  else ctx.fillStyle = named ? "#E9E5DD" : "#EFECE6";
+  if (theme === "kitsch") ctx.fillStyle = named ? tint(c.color, 0.45) : "#f1f1f1";
+  else ctx.fillStyle = named ? "#e8e8e8" : "#eeeeee";
   ctx.fill();
   ctx.clip();
   if (img) {
