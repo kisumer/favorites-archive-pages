@@ -272,20 +272,26 @@ function solid(ctx: Ctx, width: number) {
   ctx.setLineDash([]);
 }
 
+function setTitleFont(ctx: Ctx, size: number, theme: ThemeId) {
+  ctx.font = font(theme === "kitsch" ? 400 : 900, size, STYLES[theme].display);
+  if (theme === "kitsch" && "letterSpacing" in ctx) ctx.letterSpacing = `${size * -0.025}px`;
+}
+
 // ---------- layout ----------
 
 export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLayout {
-  const st = STYLES[theme];
   let y = 76;
   const kickerY = y;
   if (theme === "editorial") y += 34 + 30;
   const title = defaultTitle(year);
   let titleSize = theme === "kitsch" ? 112 : 88;
-  ctx.font = font(theme === "kitsch" ? 400 : 900, titleSize, st.display);
+  ctx.save();
+  setTitleFont(ctx, titleSize, theme);
   while (ctx.measureText(title).width > POSTER_W - PAD_X * 2 - 32 && titleSize > 40) {
     titleSize -= 4;
-    ctx.font = font(theme === "kitsch" ? 400 : 900, titleSize, st.display);
+    setTitleFont(ctx, titleSize, theme);
   }
+  ctx.restore();
   const titleY = y + titleSize / 2;
   y += titleSize + 20;
   const authorY = y + 14;
@@ -303,26 +309,28 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     let nameSize = theme === "kitsch" ? 24 : 26;
     const nameFamily = theme === "kitsch" ? FONT_SANS : FONT_SERIF;
     ctx.font = font(900, nameSize, nameFamily);
-    const maxNameW = theme === "kitsch" ? COVER + 20 - 44 : COVER;
+    const maxNameW = theme === "kitsch" ? COVER - 32 : COVER;
     while (ctx.measureText(nameText).width > maxNameW && nameSize > 15) {
       nameSize -= 1;
       ctx.font = font(900, nameSize, nameFamily);
     }
     let name: Rect;
     if (theme === "kitsch") {
-      const w = Math.min(COVER + 20, ctx.measureText(nameText).width + 44);
-      name = { x: cover.x + COVER / 2 - w / 2, y: cover.y + COVER - 22, w, h: 46 };
+      const w = Math.min(COVER, Math.max(76, ctx.measureText(nameText).width + 36));
+      name = { x: cover.x - 34, y: cover.y - 17, w, h: 50 };
     } else {
       name = { x: PAD_X, y: cover.y + COVER + 14, w: COVER, h: 36 };
     }
-    let leftBottom = name.y + name.h;
+    let leftBottom = Math.max(name.y + name.h, cover.y + cover.h);
     let bubble: Rect | null = null;
     let quoteLines: string[] = [];
     if (c.quote.trim()) {
       ctx.font = theme === "kitsch" ? font(700, 17) : font(500, 16);
-      quoteLines = wrapText(ctx, c.quote.trim(), COVER - 40, 4);
-      const gap = theme === "kitsch" ? 24 : 12;
-      bubble = { x: PAD_X, y: leftBottom + gap, w: COVER, h: quoteLines.length * 26 + 28 };
+      const w = theme === "kitsch" ? 210 : COVER;
+      quoteLines = wrapText(ctx, c.quote.trim(), w - 36, 4);
+      bubble = theme === "kitsch"
+        ? { x: cover.x + 54, y: cover.y + cover.h - 14, w, h: quoteLines.length * 26 + 28 }
+        : { x: PAD_X, y: leftBottom + 12, w, h: quoteLines.length * 26 + 28 };
       leftBottom = bubble.y + bubble.h;
     }
     const hasCaption = c.months.some((p) => p.caption.trim().length > 0);
@@ -384,7 +392,8 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
-    ctx.font = font(400, L.titleSize, st.display);
+    ctx.save();
+    setTitleFont(ctx, L.titleSize, theme);
     const tw = ctx.measureText(L.title).width;
     // highlighter swipe behind title
     ctx.save();
@@ -399,6 +408,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.restore();
     ctx.fillStyle = st.ink;
     ctx.fillText(L.title, cx, L.titleY);
+    ctx.restore();
   } else {
     ctx.strokeStyle = st.ink;
     solid(ctx, 1.5);
@@ -409,7 +419,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.font = font(700, 14);
     ctx.fillStyle = st.muted;
     ctx.fillText(`THE FAVORITES ARCHIVE  —  VOL. ${year.year}`, cx, L.kickerY + 30);
-    ctx.font = font(900, L.titleSize, st.display);
+    setTitleFont(ctx, L.titleSize, theme);
     ctx.fillStyle = st.ink;
     ctx.fillText(L.title, cx, L.titleY);
   }
@@ -429,14 +439,6 @@ function drawCover(
 ) {
   const st = STYLES[theme];
   const r = CL.cover;
-  if (theme === "kitsch") {
-    roundRectPath(ctx, { ...r, x: r.x + 8, y: r.y + 8 }, st.coverRadius);
-    ctx.fillStyle = c.color;
-    ctx.fill();
-    ctx.strokeStyle = st.ink;
-    solid(ctx, st.stroke);
-    ctx.stroke();
-  }
   const img = c.coverImageId ? getImage(c.coverImageId) : null;
   ctx.save();
   roundRectPath(ctx, r, st.coverRadius);
@@ -471,16 +473,20 @@ function drawCover(
   // name
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
-    roundRectPath(ctx, CL.name, CL.name.h / 2);
-    ctx.fillStyle = c.color;
+    const { x, y, w, h } = CL.name;
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
     ctx.fill();
     ctx.strokeStyle = st.ink;
-    solid(ctx, 3);
+    solid(ctx, 2.5);
+    ctx.setLineDash([9, 6]);
     ctx.stroke();
-    ctx.fillStyle = isDarkColor(c.color) ? "#FFFFFF" : st.ink;
+    ctx.setLineDash([]);
+    ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
     ctx.font = font(900, CL.nameSize);
-    ctx.fillText(CL.nameText, CL.name.x + CL.name.w / 2, CL.name.y + CL.name.h / 2 + 1);
+    ctx.fillText(CL.nameText, x + w / 2, y + h / 2 + 1, w - 26);
   } else {
     ctx.fillStyle = st.ink;
     ctx.textAlign = "left";
@@ -492,7 +498,7 @@ function drawCover(
   if (CL.bubble) {
     const b = CL.bubble;
     if (theme === "kitsch") {
-      bubblePath(ctx, b, 20, b.x + b.w / 2 - 20, 20);
+      bubblePath(ctx, b, 20, b.x + 40, 17);
       ctx.fillStyle = "#FFFFFF";
       ctx.fill();
       ctx.strokeStyle = st.ink;
@@ -574,8 +580,8 @@ function drawCell(
     solid(ctx, 2.5);
     ctx.stroke();
     ctx.fillStyle = st.ink;
-    ctx.font = font(900, 15);
-    ctx.fillText(monthLabel(m), r.x + 10, r.y + 11);
+    ctx.font = font(900, 19);
+    ctx.fillText(monthLabel(m), r.x + 10, r.y + 11, 43);
   } else {
     ctx.beginPath();
     ctx.arc(r.x + 8, r.y + 8, 18, 0, Math.PI * 2);
