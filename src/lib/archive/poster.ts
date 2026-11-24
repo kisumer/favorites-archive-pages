@@ -272,9 +272,13 @@ function solid(ctx: Ctx, width: number) {
   ctx.setLineDash([]);
 }
 
+function setPosterFont(ctx: Ctx, weight: number, size: number, family = FONT_SANS) {
+  ctx.font = font(weight, size, family);
+  if ("letterSpacing" in ctx) ctx.letterSpacing = `${size * -0.025}px`;
+}
+
 function setTitleFont(ctx: Ctx, size: number, theme: ThemeId) {
-  ctx.font = font(theme === "kitsch" ? 400 : 900, size, STYLES[theme].display);
-  if (theme === "kitsch" && "letterSpacing" in ctx) ctx.letterSpacing = `${size * -0.025}px`;
+  setPosterFont(ctx, theme === "kitsch" ? 400 : 900, size, STYLES[theme].display);
 }
 
 // ---------- layout ----------
@@ -296,7 +300,7 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
   y += titleSize + 20;
   const authorY = y + 14;
   const names = participantNames(year);
-  ctx.font = font(600, 20);
+  setPosterFont(ctx, 600, 20);
   const authorLines = names ? wrapText(ctx, `by ${names}`, POSTER_W - PAD_X * 2, Infinity) : [];
   if (authorLines.length) y += 44 + (authorLines.length - 1) * 26;
   y += 64;
@@ -307,12 +311,12 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     const cover: Rect = { x: PAD_X, y: top + BADGE_OVER, w: COVER, h: COVER };
     const nameText = c.name.trim() || "이름 없음";
     let nameSize = theme === "kitsch" ? 24 : 26;
-    const nameFamily = theme === "kitsch" ? FONT_SANS : FONT_SERIF;
-    ctx.font = font(900, nameSize, nameFamily);
+    const nameFamily = STYLES[theme].display;
+    setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
     const maxNameW = theme === "kitsch" ? COVER - 32 : COVER;
     while (ctx.measureText(nameText).width > maxNameW && nameSize > 15) {
       nameSize -= 1;
-      ctx.font = font(900, nameSize, nameFamily);
+      setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
     }
     let name: Rect;
     if (theme === "kitsch") {
@@ -325,7 +329,7 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     let bubble: Rect | null = null;
     let quoteLines: string[] = [];
     if (c.quote.trim()) {
-      ctx.font = theme === "kitsch" ? font(700, 17) : font(500, 16);
+      setPosterFont(ctx, theme === "kitsch" ? 700 : 500, theme === "kitsch" ? 17 : 16);
       const w = theme === "kitsch" ? 210 : COVER;
       quoteLines = wrapText(ctx, c.quote.trim(), w - 36, 4);
       bubble = theme === "kitsch"
@@ -401,7 +405,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.globalAlpha = 0.55;
     roundRectPath(
       ctx,
-      { x: cx - tw / 2 - 14, y: L.titleY + L.titleSize * 0.08, w: tw + 28, h: L.titleSize * 0.36 },
+      { x: cx - tw / 2 - 14, y: L.titleY + L.titleSize * 0.21, w: tw + 28, h: L.titleSize * 0.36 },
       10,
     );
     ctx.fill();
@@ -416,7 +420,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.moveTo(PAD_X, L.kickerY + 4);
     ctx.lineTo(POSTER_W - PAD_X, L.kickerY + 4);
     ctx.stroke();
-    ctx.font = font(700, 14);
+    setPosterFont(ctx, 700, 14);
     ctx.fillStyle = st.muted;
     ctx.fillText(`THE FAVORITES ARCHIVE  —  VOL. ${year.year}`, cx, L.kickerY + 30);
     setTitleFont(ctx, L.titleSize, theme);
@@ -424,7 +428,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.fillText(L.title, cx, L.titleY);
   }
   if (L.authorLines.length) {
-    ctx.font = font(600, 20);
+    setPosterFont(ctx, 600, 20);
     ctx.fillStyle = st.muted;
     L.authorLines.forEach((line, i) => ctx.fillText(line, cx, L.authorY + i * 26));
   }
@@ -461,7 +465,7 @@ function drawCover(
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = font(900, 54, theme === "kitsch" ? FONT_SANS : FONT_SERIF);
+    setPosterFont(ctx, 900, 54, theme === "kitsch" ? FONT_SANS : FONT_SERIF);
     ctx.fillText(Array.from(CL.nameText)[0] ?? "★", ccx, ccy + 2);
   }
   ctx.restore();
@@ -485,12 +489,12 @@ function drawCover(
     ctx.setLineDash([]);
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
-    ctx.font = font(900, CL.nameSize);
+    setPosterFont(ctx, 400, CL.nameSize, st.display);
     ctx.fillText(CL.nameText, x + w / 2, y + h / 2 + 1, w - 26);
   } else {
     ctx.fillStyle = st.ink;
     ctx.textAlign = "left";
-    ctx.font = font(900, CL.nameSize, FONT_SERIF);
+    setPosterFont(ctx, 900, CL.nameSize, FONT_SERIF);
     ctx.fillText(CL.nameText, CL.name.x, CL.name.y + CL.name.h / 2);
   }
 
@@ -508,7 +512,7 @@ function drawCover(
       ctx.setLineDash([]);
       ctx.fillStyle = st.ink;
       ctx.textAlign = "center";
-      ctx.font = font(700, 17);
+      setPosterFont(ctx, 700, 17);
       CL.quoteLines.forEach((line, i) => {
         ctx.fillText(line, b.x + b.w / 2, b.y + 14 + 13 + i * 26);
       });
@@ -521,7 +525,7 @@ function drawCover(
       ctx.stroke();
       ctx.fillStyle = st.muted;
       ctx.textAlign = "left";
-      ctx.font = font(500, 16);
+      setPosterFont(ctx, 500, 16);
       CL.quoteLines.forEach((line, i) => {
         const text = `${i === 0 ? "“" : ""}${line}${i === CL.quoteLines.length - 1 ? "”" : ""}`;
         ctx.fillText(text, b.x + 16, b.y + 14 + 13 + i * 26);
@@ -557,7 +561,7 @@ function drawCell(
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = font(900, 64, theme === "kitsch" ? FONT_SANS : FONT_SERIF);
+    setPosterFont(ctx, 900, 64, theme === "kitsch" ? FONT_SANS : FONT_SERIF);
     ctx.fillText(String(m + 1).padStart(2, "0"), r.x + r.w / 2, r.y + r.h / 2 + 2);
     ctx.globalAlpha = 1;
   }
@@ -580,7 +584,7 @@ function drawCell(
     solid(ctx, 2.5);
     ctx.stroke();
     ctx.fillStyle = st.ink;
-    ctx.font = font(900, 19);
+    setPosterFont(ctx, 900, 19);
     ctx.fillText(monthLabel(m), r.x + 10, r.y + 11, 43);
   } else {
     ctx.beginPath();
@@ -588,7 +592,7 @@ function drawCell(
     ctx.fillStyle = st.ink;
     ctx.fill();
     ctx.fillStyle = st.paper;
-    ctx.font = font(700, 13);
+    setPosterFont(ctx, 700, 13);
     ctx.fillText(monthLabel(m), r.x + 8, r.y + 9);
   }
 
@@ -598,11 +602,11 @@ function drawCell(
     const textColor = isDarkColor(color) ? "#FFFFFF" : st.ink;
     let size = theme === "kitsch" ? 16 : 14;
     const maxW = CELL * 1.02;
-    ctx.font = font(800, size);
+    setPosterFont(ctx, 800, size);
     let text = pick.name.trim();
     while (ctx.measureText(text).width > maxW - 40 && size > 11) {
       size -= 1;
-      ctx.font = font(800, size);
+      setPosterFont(ctx, 800, size);
     }
     text = ellipsize(ctx, text, maxW - 40);
     const tw = ctx.measureText(text).width;
@@ -643,7 +647,7 @@ function drawCell(
   }
 
   if (pick.caption.trim()) {
-    ctx.font = font(600, 13);
+    setPosterFont(ctx, 600, 13);
     ctx.fillStyle = st.muted;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -699,13 +703,13 @@ export function drawPoster(
     ctx.fillStyle = st.muted;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = font(800, 26);
+    setPosterFont(ctx, 800, 26);
     ctx.fillText("인원을 추가하면 여기에 채워져요", POSTER_W / 2, r.y + r.h / 2);
   }
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = font(700, 15);
+  setPosterFont(ctx, 700, 15);
   ctx.fillStyle = st.muted;
   ctx.fillText("@mieryint", POSTER_W / 2, L.footerY);
 }
