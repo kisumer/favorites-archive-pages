@@ -191,14 +191,14 @@ export const MonthPanel = forwardRef<
         <div className="mt-4 grid gap-3">
           <div>
             <FieldLabel htmlFor={ids.name} hint={`${pick.name.length}/${LIMITS.pickName}`}>
-              최애 이름 (별 스티커)
+              최애 이름
             </FieldLabel>
             <input
               id={ids.name}
               value={pick.name}
               maxLength={LIMITS.pickName}
               onChange={(e) => update({ name: e.target.value })}
-              placeholder="예: 카리나"
+              placeholder="예: 아노코"
               className={cn(inputClass, "h-11")}
             />
           </div>
