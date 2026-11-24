@@ -13,7 +13,7 @@ export function SiteFooter({ className }: { className?: string }) {
           <br className="hidden sm:block" />
           모든 데이터는 지금 쓰는 브라우저 안에만 저장되니, 기기를 바꾸기 전엔 백업 파일을 내보내 주세요.
         </p>
-        <p className="mt-4 text-[12px]">© 최애 아카이브 · 팬이 만드는 연말결산</p>
+        <p className="mt-4 text-[12px]">mieryint</p>
       </div>
     </footer>
   );
