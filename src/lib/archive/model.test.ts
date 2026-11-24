@@ -28,11 +28,11 @@ function ok(r: Result): ArchiveState {
 }
 
 describe("years", () => {
-  it("starts on 2026 with three empty categories of exactly 12 months", () => {
+  it("starts on 2026 with one empty participant row of exactly 12 months", () => {
     const s = createDefaultState(2026);
     expect(s.currentYear).toBe(2026);
     const y = getYear(s)!;
-    expect(y.categories).toHaveLength(3);
+    expect(y.categories).toHaveLength(1);
     for (const c of y.categories) {
       expect(c.months).toHaveLength(12);
       expect(c.months.every((p) => !p.name && !p.imageId)).toBe(true);
@@ -89,14 +89,14 @@ describe("categories", () => {
     if (!r.ok) throw new Error(r.error);
     s = r.state;
     let cats = getYear(s)!.categories;
-    expect(cats).toHaveLength(4);
-    expect(cats[3]!.name).toBe("올해의 노래");
+    expect(cats).toHaveLength(2);
+    expect(cats[1]!.name).toBe("올해의 노래");
     s = ok(moveCategory(s, 2026, r.id, -1));
     cats = getYear(s)!.categories;
-    expect(cats[2]!.id).toBe(r.id);
+    expect(cats[0]!.id).toBe(r.id);
     expect(moveCategory(s, 2026, cats[0]!.id, -1).ok).toBe(false);
     s = ok(deleteCategory(s, 2026, r.id));
-    expect(getYear(s)!.categories).toHaveLength(3);
+    expect(getYear(s)!.categories).toHaveLength(1);
   });
 });
 

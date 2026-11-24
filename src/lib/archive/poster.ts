@@ -99,7 +99,7 @@ function participantNames(year: YearData): string {
 }
 
 export function collectPosterText(year: YearData): string {
-  const parts = [defaultTitle(year), participantNames(year), String(year.year)];
+  const parts = [defaultTitle(year), participantNames(year), String(year.year), "@mieryint"];
   for (const c of year.categories) {
     parts.push(c.name, c.quote);
     for (const p of c.months) parts.push(p.name, p.caption);
@@ -739,14 +739,14 @@ export function drawPoster(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = font(800, 26);
-    ctx.fillText("카테고리를 추가하면 여기에 채워져요", POSTER_W / 2, r.y + r.h / 2);
+    ctx.fillText("인원을 추가하면 여기에 채워져요", POSTER_W / 2, r.y + r.h / 2);
   }
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = font(700, 15);
   ctx.fillStyle = st.muted;
-  ctx.fillText(`최애 아카이브 · 연말결산 제작소  ★  ${year.year}`, POSTER_W / 2, L.footerY);
+  ctx.fillText("@mieryint", POSTER_W / 2, L.footerY);
 }
 
 export function hitTest(

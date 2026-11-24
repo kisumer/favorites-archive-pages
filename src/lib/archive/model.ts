@@ -21,8 +21,6 @@ export const LIMITS = {
   author: 20,
 } as const;
 
-export const SEED_CATEGORY_NAMES = ["첫 번째 최애", "두 번째 최애", "세 번째 최애"];
-
 export function uid(): string {
   const c = globalThis.crypto as Crypto | undefined;
   if (c && typeof c.randomUUID === "function") return c.randomUUID();
@@ -62,8 +60,7 @@ export function createCategory(name: string, color: string): Category {
 }
 
 export function seedCategories(): Category[] {
-  const seedColors = ["#FFB3D1", "#9FEBC9", "#A9D4FF"];
-  return SEED_CATEGORY_NAMES.map((n, i) => createCategory(n, seedColors[i] ?? colorAt(i)));
+  return [createCategory("", colorAt(0))];
 }
 
 export function createYear(year: number, categories: Category[] = seedCategories()): YearData {
@@ -223,11 +220,8 @@ export function addCategory(
   const y = getYear(state, year);
   if (!y) return { ok: false, error: "해당 연도를 찾을 수 없어요." };
   if (y.categories.length >= LIMITS.categories)
-    return { ok: false, error: `카테고리는 최대 ${LIMITS.categories}개까지 만들 수 있어요.` };
-  const cat = createCategory(
-    (name ?? "").trim() || `새 최애 ${y.categories.length + 1}`,
-    colorAt(y.categories.length),
-  );
+    return { ok: false, error: `참여 인원은 최대 ${LIMITS.categories}명까지 추가할 수 있어요.` };
+  const cat = createCategory(name?.trim() ?? "", colorAt(y.categories.length));
   return {
     ok: true,
     id: cat.id,
@@ -241,12 +235,14 @@ export function updateCategory(
   categoryId: string,
   patch: Partial<Pick<Category, "name" | "quote" | "color" | "coverImageId" | "badgeMode">>,
 ): Result {
-  if (!findCategory(state, year, categoryId)) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (!findCategory(state, year, categoryId)) return { ok: false, error: "참여자를 찾을 수 없어요." };
   return { ok: true, state: mapCategory(state, year, categoryId, (c) => ({ ...c, ...patch })) };
 }
 
 export function deleteCategory(state: ArchiveState, year: number, categoryId: string): Result {
-  if (!findCategory(state, year, categoryId)) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (!findCategory(state, year, categoryId)) return { ok: false, error: "참여자를 찾을 수 없어요." };
+  if (getYear(state, year)?.categories.length === 1)
+    return { ok: false, error: "참여자는 최소 한 명이 필요해요." };
   return {
     ok: true,
     state: mapYear(state, year, (y) => ({
@@ -265,7 +261,7 @@ export function moveCategory(
   const y = getYear(state, year);
   if (!y) return { ok: false, error: "해당 연도를 찾을 수 없어요." };
   const idx = y.categories.findIndex((c) => c.id === categoryId);
-  if (idx < 0) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (idx < 0) return { ok: false, error: "참여자를 찾을 수 없어요." };
   const target = idx + direction;
   if (target < 0 || target >= y.categories.length)
     return { ok: false, error: direction < 0 ? "이미 맨 위예요." : "이미 맨 아래예요." };
@@ -283,7 +279,7 @@ export function updatePick(
   patch: Partial<MonthPick>,
 ): Result {
   if (!validMonth(month)) return { ok: false, error: "1월부터 12월까지만 있어요." };
-  if (!findCategory(state, year, categoryId)) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (!findCategory(state, year, categoryId)) return { ok: false, error: "참여자를 찾을 수 없어요." };
   return {
     ok: true,
     state: mapCategory(state, year, categoryId, (c) => ({
@@ -306,7 +302,7 @@ export function copyFromPreviousMonth(
   if (!validMonth(month)) return { ok: false, error: "1월부터 12월까지만 있어요." };
   if (month === 0) return { ok: false, error: "1월은 지난달이 없어요." };
   const cat = findCategory(state, year, categoryId);
-  if (!cat) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (!cat) return { ok: false, error: "참여자를 찾을 수 없어요." };
   const prev = cat.months[month - 1];
   if (isPickEmpty(prev)) return { ok: false, error: `${month}월이 비어 있어서 복사할 게 없어요.` };
   return updatePick(state, year, categoryId, month, { ...prev! });
@@ -330,7 +326,7 @@ export function pastePickToMonths(
 ): Result {
   if (!validMonth(sourceMonth)) return { ok: false, error: "1월부터 12월까지만 있어요." };
   const cat = findCategory(state, year, categoryId);
-  if (!cat) return { ok: false, error: "카테고리를 찾을 수 없어요." };
+  if (!cat) return { ok: false, error: "참여자를 찾을 수 없어요." };
   const src = cat.months[sourceMonth];
   if (isPickEmpty(src)) return { ok: false, error: "붙여넣을 내용이 없어요. 먼저 이 달을 채워 주세요." };
   const set = new Set(targets.filter((m) => validMonth(m) && m !== sourceMonth));
