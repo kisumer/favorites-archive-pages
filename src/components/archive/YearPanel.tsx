@@ -41,7 +41,7 @@ export function YearPanel() {
     setError(null);
     setDraft("");
     toast.success(`${parsed.year}년 취향표를 만들었어요`, {
-      description: copy ? "카테고리 이름·사진은 가져오고 월별 최애는 비워 뒀어요." : undefined,
+      description: copy ? "참여자 이름·사진은 가져오고 월별 최애는 비워 뒀어요." : undefined,
     });
   };
 
@@ -53,7 +53,7 @@ export function YearPanel() {
     }
     const ok = await confirm({
       title: `${current.year}년을 지울까요?`,
-      description: "이 연도의 카테고리와 월별 최애가 모두 사라지고 되돌릴 수 없어요.",
+      description: "이 연도의 참여자와 월별 최애가 모두 사라지고 되돌릴 수 없어요.",
       confirmText: "지우기",
       destructive: true,
     });
@@ -126,7 +126,7 @@ export function YearPanel() {
             className="h-5 w-5 rounded-md border-2 border-ink"
           />
           <label htmlFor={ids.copy} className="text-[13px] font-semibold leading-snug">
-            지금 연도({state.currentYear})의 카테고리 이름·한마디·사진 가져오기
+            지금 연도({state.currentYear})의 참여자 이름·한마디·사진 가져오기
           </label>
         </div>
         {suggestion && !state.years.some((y) => y.year === suggestion) ? (

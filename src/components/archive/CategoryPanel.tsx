@@ -46,7 +46,7 @@ export function CategoryPanel({
     });
     if (ok && created.id) {
       onSelect(created.id);
-      toast.success("새 카테고리를 만들었어요", { description: "이름과 표지 사진을 정해 주세요." });
+      toast.success("참여자를 추가했어요", { description: "이름과 표지 사진을 정해 주세요." });
       requestAnimationFrame(() => document.getElementById(ids.name)?.focus());
     }
   };
@@ -55,11 +55,11 @@ export function CategoryPanel({
     if (!category) return;
     const filled = category.months.filter((p) => !isPickEmpty(p)).length;
     const ok = await confirm({
-      title: `‘${category.name || "이름 없음"}’ 카테고리를 지울까요?`,
+      title: `‘${category.name || "이름 없음"}’ 참여자를 지울까요?`,
       description:
         filled > 0
           ? `채워 둔 ${filled}개월의 최애도 함께 지워지고 되돌릴 수 없어요.`
-          : "이 카테고리가 포스터에서 사라져요.",
+          : "이 참여자가 포스터에서 사라져요.",
       confirmText: "지우기",
       destructive: true,
     });
@@ -67,37 +67,37 @@ export function CategoryPanel({
     const nextSel = year.categories[index + 1]?.id ?? year.categories[index - 1]?.id ?? null;
     if (apply((s) => deleteCategory(s, year.year, category.id))) {
       onSelect(nextSel);
-      toast.success("카테고리를 지웠어요");
+      toast.success("참여자를 지웠어요");
     }
   };
 
   return (
     <Panel
       step="STEP 2"
-      title="카테고리"
+      title="참여 인원"
       icon={Layers}
       accentClassName="bg-pink"
       action={
-        <Button variant="pop" size="sm" onClick={add} aria-label="카테고리 추가">
+        <Button variant="pop" size="sm" onClick={add} aria-label="인원 추가">
           <Plus aria-hidden="true" />
-          추가
+          인원 추가
         </Button>
       }
     >
       {year.categories.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-input px-4 py-8 text-center">
           <Starburst className="h-16 w-16 animate-float" fillClassName="fill-lemon" dotted />
-          <p className="mt-3 text-base font-black">아직 카테고리가 없어요</p>
+          <p className="mt-3 text-base font-black">아직 참여자가 없어요</p>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            그룹, 배우, 노래, 캐릭터… 모으고 싶은 최애 분야를 만들어 보세요.
+            참여자를 추가하고 월별 최애를 채워 보세요.
           </p>
           <Button variant="popInk" size="lg" className="mt-4" onClick={add}>
-            <Plus aria-hidden="true" />첫 카테고리 만들기
+            <Plus aria-hidden="true" />첫 참여자 추가
           </Button>
         </div>
       ) : (
         <>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="group" aria-label="카테고리 목록">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="group" aria-label="참여자 목록">
             {year.categories.map((c) => {
               const active = c.id === category?.id;
               return (
@@ -125,21 +125,21 @@ export function CategoryPanel({
           {category ? (
             <div className="mt-3 space-y-4">
               <PhotoField
-                label={`${category.name || "카테고리"} 표지`}
+                label={`${category.name || "참여자"} 표지`}
                 emptyHint="표지 사진"
                 imageId={category.coverImageId}
                 onChange={(id) => apply((s) => updateCategory(s, year.year, category.id, { coverImageId: id }))}
               />
               <div>
                 <FieldLabel htmlFor={ids.name} hint={`${category.name.length}/${LIMITS.categoryName}`}>
-                  카테고리 이름
+                  참여자 이름
                 </FieldLabel>
                 <input
                   id={ids.name}
                   value={category.name}
                   maxLength={LIMITS.categoryName}
                   onChange={(e) => apply((s) => updateCategory(s, year.year, category.id, { name: e.target.value }))}
-                  placeholder="예: 최애 그룹"
+                  placeholder="예: 문개박사"
                   className={cn(inputClass, "h-11")}
                 />
               </div>
@@ -158,9 +158,9 @@ export function CategoryPanel({
                 />
               </div>
               <div>
-                <p className="mb-2 text-[13px] font-bold">카테고리 색</p>
+                <p className="mb-2 text-[13px] font-bold">참여자 색</p>
                 <ColorSwatches
-                  label="카테고리 색"
+                  label="참여자 색"
                   value={category.color}
                   options={CATEGORY_COLORS}
                   onChange={(hex) => hex && apply((s) => updateCategory(s, year.year, category.id, { color: hex }))}
@@ -168,7 +168,7 @@ export function CategoryPanel({
               </div>
               <div className="flex items-center justify-between gap-3 rounded-2xl bg-paper-deep px-3 py-2.5">
                 <label htmlFor={ids.badge} className="text-[13px] font-bold leading-snug">
-                  월 동그라미를 카테고리 색으로
+                  월 동그라미를 참여자 색으로
                   <span className="block text-[12px] font-medium text-muted-foreground">끄면 달마다 무지개색</span>
                 </label>
                 <Switch
@@ -205,7 +205,7 @@ export function CategoryPanel({
                 >
                   <ArrowDown aria-hidden="true" />
                 </Button>
-                <Button variant="ghostDanger" size="sm" onClick={remove}>
+                <Button variant="ghostDanger" size="sm" disabled={year.categories.length <= 1} onClick={remove}>
                   <Trash2 aria-hidden="true" />
                   삭제
                 </Button>

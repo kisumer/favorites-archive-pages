@@ -44,7 +44,7 @@ export const MonthPanel = forwardRef<
     return (
       <Panel ref={ref} step="STEP 3" title="월별 최애" icon={Sparkles} accentClassName="bg-mint">
         <p className="rounded-2xl border-2 border-dashed border-input px-4 py-6 text-center text-[14px] font-semibold text-muted-foreground">
-          카테고리를 먼저 만들면 1월부터 12월까지 채울 수 있어요.
+          인원을 먼저 추가하면 1월부터 12월까지 채울 수 있어요.
         </p>
       </Panel>
     );

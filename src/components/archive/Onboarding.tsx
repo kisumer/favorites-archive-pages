@@ -1,4 +1,4 @@
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Plus, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { addCategory, LIMITS, updateCategory } from "@/lib/archive/model";
+import { addCategory, deleteCategory, isPickEmpty, LIMITS, updateCategory } from "@/lib/archive/model";
 import type { YearData } from "@/lib/archive/types";
 import { cn } from "@/lib/utils";
 import { useArchive } from "./ArchiveProvider";
+import { useConfirm } from "./ConfirmProvider";
 import { inputClass } from "./Panel";
 import { Starburst } from "./Logo";
 
@@ -28,7 +29,21 @@ export function Onboarding({
   year: YearData;
 }) {
   const { apply } = useArchive();
+  const confirm = useConfirm();
   const [step, setStep] = useState<1 | 2>(1);
+
+  const remove = async (id: string) => {
+    const person = year.categories.find((entry) => entry.id === id);
+    if (!person) return;
+    const hasContent = person.coverImageId || person.quote.trim() || person.months.some((pick) => !isPickEmpty(pick));
+    if (hasContent && !(await confirm({
+      title: `‘${person.name || "이름 없음"}’ 참여자를 삭제할까요?`,
+      description: "이 참여자의 사진과 월별 최애 기록도 함께 삭제돼요.",
+      confirmText: "삭제",
+      destructive: true,
+    }))) return;
+    apply((s) => deleteCategory(s, year.year, id));
+  };
 
   const finish = () => {
     try {
@@ -57,11 +72,11 @@ export function Onboarding({
               <p className="text-[12px] font-black tracking-[0.16em] text-muted-foreground">1 / 2</p>
               <DialogTitle className="text-2xl font-black leading-tight">어떤 최애를 모을까요?</DialogTitle>
               <DialogDescription>
-                카테고리마다 한 줄씩, 1월부터 12월까지 최애를 채워요. 이름은 나중에도 바꿀 수 있어요.
+                참여 인원마다 한 줄씩, 1월부터 12월까지 최애를 채워요. 이름은 나중에도 바꿀 수 있어요.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-2">
-              {year.categories.slice(0, 5).map((c, i) => (
+              {year.categories.map((c, i) => (
                 <div key={c.id} className="flex items-center gap-2">
                   <span
                     className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink text-sm font-black"
@@ -71,21 +86,34 @@ export function Onboarding({
                     {i + 1}
                   </span>
                   <label htmlFor={`onb-${c.id}`} className="sr-only">
-                    카테고리 {i + 1} 이름
+                    참여자 {i + 1} 이름
                   </label>
-                  <input
-                    id={`onb-${c.id}`}
-                    value={c.name}
-                    maxLength={LIMITS.categoryName}
-                    onChange={(e) => apply((s) => updateCategory(s, year.year, c.id, { name: e.target.value }))}
-                    placeholder="예: 최애 그룹, 최애 배우, 올해의 노래"
-                    className={cn(inputClass, "h-11")}
-                  />
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      id={`onb-${c.id}`}
+                      value={c.name}
+                      maxLength={LIMITS.categoryName}
+                      onChange={(e) => apply((s) => updateCategory(s, year.year, c.id, { name: e.target.value }))}
+                      placeholder={`참여자 ${i + 1} 이름`}
+                      className={cn(inputClass, "h-11 min-w-0 pr-10")}
+                    />
+                    {year.categories.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="iconSm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2"
+                        aria-label={`참여자 ${i + 1} 삭제`}
+                        onClick={() => void remove(c.id)}
+                      >
+                        <X aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
-              {year.categories.length < 5 ? (
+              {year.categories.length < LIMITS.categories ? (
                 <Button variant="ghost" size="sm" className="justify-start" onClick={() => apply((s) => addCategory(s, year.year))}>
-                  + 카테고리 하나 더
+                  <Plus aria-hidden="true" /> 인원 추가
                 </Button>
               ) : null}
             </div>
