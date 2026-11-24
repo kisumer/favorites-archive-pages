@@ -390,6 +390,20 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
 
 // ---------- drawing ----------
 
+function centeredInk(ctx: Ctx, text: string) {
+  const metrics = ctx.measureText(text);
+  const left = metrics.actualBoundingBoxLeft || 0;
+  const right = metrics.actualBoundingBoxRight || 0;
+  const ascent = metrics.actualBoundingBoxAscent || 0;
+  const descent = metrics.actualBoundingBoxDescent || 0;
+  return {
+    width: left + right || metrics.width,
+    offsetX: (left - right) / 2,
+    offsetY: (ascent - descent) / 2,
+  };
+}
+
+
 function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   const st = STYLES[theme];
   const cx = POSTER_W / 2;
@@ -398,7 +412,8 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   if (theme === "kitsch") {
     ctx.save();
     setTitleFont(ctx, L.titleSize, theme);
-    const tw = ctx.measureText(L.title).width;
+    const titleInk = centeredInk(ctx, L.title);
+    const tw = titleInk.width;
     // highlighter swipe behind title
     ctx.save();
     ctx.fillStyle = "#FFB3D1";
@@ -411,7 +426,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.fill();
     ctx.restore();
     ctx.fillStyle = st.ink;
-    ctx.fillText(L.title, cx, L.titleY);
+    ctx.fillText(L.title, cx + titleInk.offsetX, L.titleY + titleInk.offsetY);
     ctx.restore();
   } else {
     ctx.strokeStyle = st.ink;
@@ -490,7 +505,13 @@ function drawCover(
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
     setPosterFont(ctx, 400, CL.nameSize, st.display);
-    ctx.fillText(CL.nameText, x + w / 2, y + h / 2 + 1, w - 26);
+    const ink = centeredInk(ctx, CL.nameText);
+    const scale = Math.min(1, (w - 26) / Math.max(1, ink.width));
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.scale(scale, 1);
+    ctx.fillText(CL.nameText, ink.offsetX, ink.offsetY);
+    ctx.restore();
   } else {
     ctx.fillStyle = st.ink;
     ctx.textAlign = "left";
