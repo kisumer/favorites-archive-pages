@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "열두 달의 최애를 한 장에. 카테고리별로 달마다 최애 사진을 채우면 연말결산 취향표 이미지가 완성돼요. 로그인 없이 무료로.",
+          "열두 달의 최애를 한 장에. 참여자별로 달마다 최애 사진을 채우면 연말결산 취향표 이미지가 완성돼요. 로그인 없이 무료로.",
       },
       { property: "og:title", content: "최애 아카이브 · 월별 최애 연말결산 메이커" },
       {
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
 });
 
 const STEPS = [
-  { icon: Layers, title: "카테고리 만들기", body: "그룹, 배우, 노래… 표지 사진과 말풍선 한마디까지", color: "bg-pink" },
+  { icon: Layers, title: "인원 추가", body: "참여자 이름부터 표지 사진과 말풍선까지", color: "bg-pink" },
   { icon: Images, title: "달마다 최애 채우기", body: "1월부터 12월까지 사진과 이름. 같은 최애는 한 번에 붙여넣기", color: "bg-mint" },
   { icon: Download, title: "PNG로 저장·공유", body: "고화질 이미지 한 장으로 저장하고 바로 공유", color: "bg-sky" },
 ];
@@ -67,7 +67,7 @@ function Landing() {
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-md text-[16px] font-medium leading-relaxed text-muted-foreground lg:mx-0">
-              카테고리마다, 달마다 최애 사진을 채우면 나만의 연말결산 취향표가 완성돼요. 로그인 없이 바로 시작!
+              참여자마다, 달마다 최애 사진을 채우면 나만의 연말결산 취향표가 완성돼요. 로그인 없이 바로 시작!
             </p>
             <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <Link to="/make/" className={cn(buttonVariants({ variant: "pop", size: "xl" }), "w-full sm:w-auto")}>
