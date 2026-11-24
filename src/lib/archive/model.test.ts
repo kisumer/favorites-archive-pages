@@ -83,6 +83,21 @@ describe("years", () => {
 });
 
 describe("categories", () => {
+  it("allows six participants and preserves larger legacy years", () => {
+    let state = createDefaultState(2026);
+    for (let i = 1; i < 6; i++) state = ok(addCategory(state, 2026));
+    expect(getYear(state)?.categories).toHaveLength(6);
+    expect(addCategory(state, 2026).ok).toBe(false);
+
+    const oldYear = getYear(state)!;
+    oldYear.categories.push({ ...oldYear.categories[0]!, id: "legacy-seventh" });
+    const restored = normalizeState(state)!;
+    expect(getYear(restored)?.categories.at(-1)?.id).toBe("legacy-seventh");
+    const next = ok(addYear(restored, 2027, { copyFrom: 2026 }));
+    expect(getYear(next, 2026)?.categories).toHaveLength(7);
+    expect(getYear(next, 2027)?.categories).toHaveLength(6);
+  });
+
   it("adds, reorders and deletes", () => {
     let s = createDefaultState(2026);
     const r = addCategory(s, 2026, "올해의 노래");

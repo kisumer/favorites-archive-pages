@@ -11,8 +11,11 @@ import type {
 
 export const MONTH_COUNT = 12;
 
+// Preserve archives created before the six-person limit.
+const LEGACY_CATEGORY_LIMIT = 20;
+
 export const LIMITS = {
-  categories: 20,
+  categories: 6,
   categoryName: 16,
   quote: 60,
   pickName: 20,
@@ -130,7 +133,7 @@ export function addYear(
   let categories: Category[];
   const source = opts.copyFrom != null ? getYear(state, opts.copyFrom) : undefined;
   if (source && source.categories.length > 0) {
-    categories = source.categories.map((c) => ({
+    categories = source.categories.slice(0, LIMITS.categories).map((c) => ({
       ...c,
       id: uid(),
       months: emptyMonths(),
@@ -406,7 +409,7 @@ export function normalizeState(raw: unknown): ArchiveState | null {
     const cats = Array.isArray(y["categories"]) ? y["categories"] : [];
     const ids = new Set<string>();
     const categories: Category[] = [];
-    cats.slice(0, LIMITS.categories).forEach((c, i) => {
+    cats.slice(0, LEGACY_CATEGORY_LIMIT).forEach((c, i) => {
       const n = normalizeCategory(c, i);
       if (!n) return;
       if (ids.has(n.id)) n.id = uid();
