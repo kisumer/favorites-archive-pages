@@ -2,7 +2,8 @@
  * The poster renderer. The live preview and the PNG export both call drawPoster(),
  * so what you see is exactly what you download.
  */
-import { FONT_SANS, FONT_SERIF } from "./fonts";
+import { FONT_POSTER_TITLE, FONT_SANS, FONT_SERIF } from "./fonts";
+import { monthLabel } from "./model";
 import { RAINBOW, isDarkColor, tint } from "./palette";
 import type { Category, MonthPick, ThemeId, YearData } from "./types";
 
@@ -72,7 +73,7 @@ const STYLES: Record<ThemeId, Style> = {
     paper: "#fafafa",
     ink: INK,
     muted: "#77717F",
-    display: FONT_SANS,
+    display: FONT_POSTER_TITLE,
     coverRadius: 30,
     cardRadius: 22,
     stroke: 3,
@@ -280,10 +281,10 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
   if (theme === "editorial") y += 34 + 30;
   const title = defaultTitle(year);
   let titleSize = theme === "kitsch" ? 112 : 88;
-  ctx.font = font(900, titleSize, st.display);
+  ctx.font = font(theme === "kitsch" ? 400 : 900, titleSize, st.display);
   while (ctx.measureText(title).width > POSTER_W - PAD_X * 2 - 32 && titleSize > 40) {
     titleSize -= 4;
-    ctx.font = font(900, titleSize, st.display);
+    ctx.font = font(theme === "kitsch" ? 400 : 900, titleSize, st.display);
   }
   const titleY = y + titleSize / 2;
   y += titleSize + 20;
@@ -383,7 +384,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
-    ctx.font = font(900, L.titleSize, st.display);
+    ctx.font = font(400, L.titleSize, st.display);
     const tw = ctx.measureText(L.title).width;
     // highlighter swipe behind title
     ctx.save();
@@ -574,7 +575,7 @@ function drawCell(
     ctx.stroke();
     ctx.fillStyle = st.ink;
     ctx.font = font(900, 15);
-    ctx.fillText(`${m + 1}월`, r.x + 10, r.y + 11);
+    ctx.fillText(monthLabel(m), r.x + 10, r.y + 11);
   } else {
     ctx.beginPath();
     ctx.arc(r.x + 8, r.y + 8, 18, 0, Math.PI * 2);
@@ -582,7 +583,7 @@ function drawCell(
     ctx.fill();
     ctx.fillStyle = st.paper;
     ctx.font = font(700, 13);
-    ctx.fillText(String(m + 1).padStart(2, "0"), r.x + 8, r.y + 9);
+    ctx.fillText(monthLabel(m), r.x + 8, r.y + 9);
   }
 
   // name label

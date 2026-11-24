@@ -28,7 +28,7 @@ export function uid(): string {
 }
 
 export function monthLabel(month: number): string {
-  return `${month + 1}월`;
+  return `${month + 1}月`;
 }
 
 export function emptyPick(): MonthPick {
@@ -278,7 +278,7 @@ export function updatePick(
   month: number,
   patch: Partial<MonthPick>,
 ): Result {
-  if (!validMonth(month)) return { ok: false, error: "1월부터 12월까지만 있어요." };
+  if (!validMonth(month)) return { ok: false, error: "1月부터 12月까지만 있어요." };
   if (!findCategory(state, year, categoryId)) return { ok: false, error: "참여자를 찾을 수 없어요." };
   return {
     ok: true,
@@ -299,12 +299,12 @@ export function copyFromPreviousMonth(
   categoryId: string,
   month: number,
 ): Result {
-  if (!validMonth(month)) return { ok: false, error: "1월부터 12월까지만 있어요." };
-  if (month === 0) return { ok: false, error: "1월은 지난달이 없어요." };
+  if (!validMonth(month)) return { ok: false, error: "1月부터 12月까지만 있어요." };
+  if (month === 0) return { ok: false, error: "1月은 지난달이 없어요." };
   const cat = findCategory(state, year, categoryId);
   if (!cat) return { ok: false, error: "참여자를 찾을 수 없어요." };
   const prev = cat.months[month - 1];
-  if (isPickEmpty(prev)) return { ok: false, error: `${month}월이 비어 있어서 복사할 게 없어요.` };
+  if (isPickEmpty(prev)) return { ok: false, error: `${monthLabel(month - 1)}이 비어 있어서 복사할 게 없어요.` };
   return updatePick(state, year, categoryId, month, { ...prev! });
 }
 
@@ -324,7 +324,7 @@ export function pastePickToMonths(
   sourceMonth: number,
   targets: number[],
 ): Result {
-  if (!validMonth(sourceMonth)) return { ok: false, error: "1월부터 12월까지만 있어요." };
+  if (!validMonth(sourceMonth)) return { ok: false, error: "1月부터 12月까지만 있어요." };
   const cat = findCategory(state, year, categoryId);
   if (!cat) return { ok: false, error: "참여자를 찾을 수 없어요." };
   const src = cat.months[sourceMonth];
