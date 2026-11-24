@@ -238,16 +238,6 @@ export function starburstPath(
   ctx.closePath();
 }
 
-function sparklePath(ctx: Ctx, cx: number, cy: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - r);
-  ctx.quadraticCurveTo(cx, cy, cx + r, cy);
-  ctx.quadraticCurveTo(cx, cy, cx, cy + r);
-  ctx.quadraticCurveTo(cx, cy, cx - r, cy);
-  ctx.quadraticCurveTo(cx, cy, cx, cy - r);
-  ctx.closePath();
-}
-
 function sizeOf(img: CanvasImageSource): { w: number; h: number } {
   if (typeof HTMLImageElement !== "undefined" && img instanceof HTMLImageElement)
     return { w: img.naturalWidth, h: img.naturalHeight };
@@ -393,7 +383,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
-    const kicker = `★ MY FAVORITES ARCHIVE ★`;
+    const kicker = "MY FAVORITES ARCHIVE";
     ctx.font = font(800, 14);
     const kw = ctx.measureText(kicker).width + 40;
     roundRectPath(ctx, { x: cx - kw / 2, y: L.kickerY, w: kw, h: 34 }, 17);
@@ -418,32 +408,6 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.fillStyle = st.ink;
     ctx.fillText(L.title, cx, L.titleY);
 
-    // starbursts flanking the title
-    const flank = [
-      { x: cx - tw / 2 - 70, y: L.titleY - 6, r: 38, c: "#FFF07A", s: 11 },
-      { x: cx + tw / 2 + 70, y: L.titleY + 4, r: 32, c: "#9FEBC9", s: 29 },
-    ];
-    for (const f of flank) {
-      starburstPath(ctx, f.x, f.y, f.r, f.r, 12, 12, f.s);
-      ctx.fillStyle = f.c;
-      ctx.fill();
-      ctx.strokeStyle = st.ink;
-      solid(ctx, 2.5);
-      ctx.stroke();
-    }
-    const sparkles = [
-      { x: cx - tw / 2 - 118, y: L.titleY - 44, r: 12, c: "#C9B2FF" },
-      { x: cx + tw / 2 + 122, y: L.titleY - 40, r: 10, c: "#FF9C82" },
-      { x: cx + tw / 2 + 24, y: L.titleY - L.titleSize / 2 - 6, r: 9, c: "#A9D4FF" },
-    ];
-    for (const s of sparkles) {
-      sparklePath(ctx, s.x, s.y, s.r);
-      ctx.fillStyle = s.c;
-      ctx.fill();
-      ctx.strokeStyle = st.ink;
-      solid(ctx, 2);
-      ctx.stroke();
-    }
   } else {
     ctx.strokeStyle = st.ink;
     solid(ctx, 1.5);
@@ -698,7 +662,7 @@ export function drawPoster(
   getImage: ImageGetter,
 ) {
   const st = STYLES[theme];
-  ctx.fillStyle = st.paper;
+  ctx.fillStyle = "#f2f2f2";
   ctx.fillRect(0, 0, L.width, L.height);
   drawHeader(ctx, L, year, theme);
 
