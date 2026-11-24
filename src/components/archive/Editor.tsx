@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Check, CircleHelp, CloudOff, Database, Download, Eye, Loader2, Maximize2, Minimize2, PencilLine } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Check, CircleHelp, CloudOff, Download, Eye, Loader2, Maximize2, Minimize2, PencilLine } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { getYear } from "@/lib/archive/model";
@@ -8,14 +8,12 @@ import { cn } from "@/lib/utils";
 import { ArchiveProvider, useArchive } from "./ArchiveProvider";
 import { CategoryPanel } from "./CategoryPanel";
 import { ConfirmProvider } from "./ConfirmProvider";
-import { DataDialog } from "./DataDialog";
 import { ExportDialog } from "./ExportDialog";
 import { Wordmark } from "./Logo";
 import { MonthPanel } from "./MonthPanel";
 import { Onboarding, ONBOARDED_KEY } from "./Onboarding";
 import { PosterPreview } from "./PosterPreview";
 import { SiteFooter } from "./SiteFooter";
-import { ThemeToggle } from "./ThemeToggle";
 import { YearPanel } from "./YearPanel";
 
 export function EditorSkeleton() {
@@ -71,11 +69,11 @@ function SaveBadge() {
 function Editor() {
   const { state, images } = useArchive();
   const year = getYear(state) ?? state.years[0]!;
+  const posterYear = useMemo(() => ({ ...year, author: "", coauthors: [] }), [year]);
   const [catId, setCatId] = useState<string | null>(year.categories[0]?.id ?? null);
   const [month, setMonth] = useState(0);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [exportOpen, setExportOpen] = useState(false);
-  const [dataOpen, setDataOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [zoom, setZoom] = useState(false);
   const monthRef = useRef<HTMLElement>(null);
@@ -119,10 +117,6 @@ function Editor() {
             <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="사용 방법" title="사용 방법">
               <CircleHelp aria-hidden="true" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setDataOpen(true)} aria-label="내 데이터 · 백업">
-              <Database aria-hidden="true" />
-              <span className="hidden sm:inline">내 데이터</span>
-            </Button>
             <Button variant="popInk" size="sm" onClick={openExport} className="hidden lg:inline-flex">
               <Download aria-hidden="true" />
               이미지 저장
@@ -148,7 +142,6 @@ function Editor() {
               <h2 className="mr-auto text-lg font-black">
                 미리보기 <span className="text-[13px] font-bold text-muted-foreground">· {year.year}</span>
               </h2>
-              <ThemeToggle />
               <Button
                 variant="outline"
                 size="iconSm"
@@ -162,7 +155,7 @@ function Editor() {
             </div>
             <div className="paper-dots overflow-auto rounded-3xl border-2 border-ink bg-paper-deep p-2 shadow-pop sm:p-4 lg:max-h-[calc(100dvh-10rem)]">
               <div className={cn("overflow-hidden rounded-xl shadow-soft", zoom && "w-[960px] max-w-none lg:w-auto")}>
-                <PosterPreview year={year} theme={state.theme} images={images} onPick={onPick} />
+                <PosterPreview year={posterYear} theme="kitsch" images={images} onPick={onPick} />
               </div>
             </div>
             <p className="mt-2 text-center text-[12px] font-semibold text-muted-foreground">
@@ -211,8 +204,7 @@ function Editor() {
         </div>
       </nav>
 
-      <ExportDialog open={exportOpen} onOpenChange={setExportOpen} year={year} theme={state.theme} />
-      <DataDialog open={dataOpen} onOpenChange={setDataOpen} />
+      <ExportDialog open={exportOpen} onOpenChange={setExportOpen} year={posterYear} theme="kitsch" />
       <Onboarding open={helpOpen} onOpenChange={setHelpOpen} year={year} />
     </div>
   );

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addParticipant, addYear, deleteParticipant, deleteYear, LIMITS, parseYearInput, setCurrentYear, updateParticipant, updateYearMeta } from "@/lib/archive/model";
+import { addYear, deleteYear, LIMITS, parseYearInput, setCurrentYear, updateYearMeta } from "@/lib/archive/model";
 import { cn } from "@/lib/utils";
 import { useArchive } from "./ArchiveProvider";
 import { useConfirm } from "./ConfirmProvider";
@@ -14,11 +14,10 @@ export function YearPanel() {
   const { state, apply } = useArchive();
   const confirm = useConfirm();
   const current = state.years.find((y) => y.year === state.currentYear);
-  const participants = current ? [current.author, ...(current.coauthors ?? [])] : [];
   const [draft, setDraft] = useState("");
   const [copy, setCopy] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const ids = { input: useId(), copy: useId(), title: useId(), author: useId(), err: useId() };
+  const ids = { input: useId(), copy: useId(), title: useId(), err: useId() };
   const maxYear = Math.max(...state.years.map((y) => y.year));
   const suggestion = maxYear + 1 <= 9999 ? maxYear + 1 : null;
 
@@ -144,7 +143,7 @@ export function YearPanel() {
       </form>
 
       {current ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4">
           <div>
             <FieldLabel htmlFor={ids.title} hint={`${current.title.length}/${LIMITS.title}`}>
               포스터 제목
@@ -157,46 +156,6 @@ export function YearPanel() {
               placeholder={`${current.year} 최애 연말결산`}
               className={cn(inputClass, "h-11")}
             />
-          </div>
-          <div>
-            <FieldLabel htmlFor={`${ids.author}-0`} hint={`${participants.length}명 · 이름은 선택`}>
-              만든 사람
-            </FieldLabel>
-            <div className="space-y-2">
-              {participants.map((name, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    id={`${ids.author}-${index}`}
-                    aria-label={`참여자 ${index + 1} 이름`}
-                    value={name}
-                    maxLength={LIMITS.author}
-                    onChange={(e) => apply((s) => updateParticipant(s, current.year, index, e.target.value))}
-                    placeholder={index === 0 ? "@내닉네임" : `참여자 ${index + 1}`}
-                    className={cn(inputClass, "h-11 min-w-0")}
-                  />
-                  {participants.length > 1 && (
-                    <Button
-                      variant="ghostDanger"
-                      size="icon"
-                      className="h-11 shrink-0"
-                      aria-label={`참여자 ${index + 1} 삭제`}
-                      onClick={() => apply((s) => deleteParticipant(s, current.year, index))}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 px-2"
-              onClick={() => apply((s) => addParticipant(s, current.year))}
-            >
-              <Plus aria-hidden="true" />
-              참여자 추가
-            </Button>
           </div>
         </div>
       ) : null}
