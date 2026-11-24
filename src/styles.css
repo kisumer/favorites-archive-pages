@@ -79,8 +79,8 @@
 :root {
   --radius: 1rem;
 
-  --paper: oklch(0.987 0.008 90);
-  --paper-deep: oklch(0.955 0.016 85);
+  --paper: #fafafa;
+  --paper-deep: #ededed;
   --ink: oklch(0.2 0.014 290);
   --pink: oklch(0.84 0.1 355);
   --coral: oklch(0.79 0.12 35);
@@ -105,8 +105,8 @@
   --accent-foreground: var(--ink);
   --destructive: oklch(0.58 0.21 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.88 0.015 85);
-  --input: oklch(0.84 0.018 85);
+  --border: #d6d6d6;
+  --input: #c6c6c6;
   --ring: var(--ink);
 }
 
