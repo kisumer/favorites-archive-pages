@@ -22,14 +22,11 @@ npm run preview
 
 [최애 아카이브](https://kisumer.github.io/favorites-archive-pages/) · [GitHub Pages 게시 소스 설정](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
 
+## 방문 통계
 
-## 방문 통계 켜기
+1. Google 애널리틱스 **관리 → 데이터 스트림**에서 사이트의 웹 스트림을 선택하고 `G-`로 시작하는 측정 ID를 복사합니다.
+2. GitHub 저장소 **Settings → Secrets and variables → Actions → Variables**에서 `GA4_MEASUREMENT_ID` 변수에 ID를 넣습니다. 변수가 비어 있으면 분석 태그가 삽입되지 않습니다.
+3. **Actions → Deploy GitHub Pages → Run workflow**에서 `main`을 재배포합니다.
+4. 배포한 사이트를 방문하고 Google 애널리틱스의 **보고서 → 실시간**에서 데이터가 들어오는지 확인합니다.
 
-1. Cloudflare **Web Analytics → Add a site**에서 `kisumer.github.io`를 등록하고 **Manage site**의 설치 코드에서 `token` 값만 복사합니다.
-2. GitHub 저장소의 **Settings → Secrets and variables → Actions → Variables → New repository variable**에서 `CLOUDFLARE_WEB_ANALYTICS_TOKEN`을 추가합니다. 이 값은 배포된 HTML에 들어가는 사이트 식별자입니다.
-3. **Actions → Deploy GitHub Pages → Run workflow**에서 `main`을 선택해 재배포합니다. 토큰을 빼고 재배포하면 수집이 꺼집니다.
-4. 사이트에 방문한 후 Cloudflare **Web Analytics**에서 기간별 Visits, Page views 및 유입 경로·국가·기기별 통계를 확인합니다. Visits는 고유 사용자 수와 다릅니다.
-
-Web Analytics는 커스텀 이벤트를 지원하지 않습니다. `/make/` 조회수는 편집기 진입 규모를 보는 참고 지표입니다.
-
-[Cloudflare 수동 설치 안내](https://developers.cloudflare.com/web-analytics/get-started/)
+사이트의 사진과 편집 내용은 브라우저에 저장되며, 분석 코드로 전달하지 않습니다. 광고 개인화와 Google 신호 데이터 수집은 분석 태그에서 끕니다. Google Analytics는 통계 측정에 쿠키를 사용할 수 있습니다.
