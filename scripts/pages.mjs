@@ -1,19 +1,28 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 
-const token = process.env.CLOUDFLARE_WEB_ANALYTICS_TOKEN?.trim();
-if (token && !/^[a-zA-Z0-9_-]+$/.test(token)) {
-  throw new Error("CLOUDFLARE_WEB_ANALYTICS_TOKEN must contain only the site token.");
+const measurementId = process.env.GA4_MEASUREMENT_ID?.trim();
+if (measurementId && !/^G-[A-Z0-9]+$/.test(measurementId)) {
+  throw new Error("GA4_MEASUREMENT_ID must be a Google Analytics measurement ID starting with G-.");
 }
 
 await mkdir("dist/make", { recursive: true });
 await copyFile("dist/index.html", "dist/404.html");
 
-if (token) {
+if (measurementId) {
   const html = await readFile("dist/index.html", "utf8");
-  const beacon = `    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${token}","spa":true}'></script>`;
-  const closingBody = /<\/body>/i;
-  if (!closingBody.test(html)) throw new Error("Cannot add Web Analytics without a closing body tag.");
-  await writeFile("dist/index.html", html.replace(closingBody, `${beacon}\n  </body>`));
+  const tag = `    <script async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', '${measurementId}', {
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false
+      });
+    </script>`;
+  const closingHead = /<\/head>/i;
+  if (!closingHead.test(html)) throw new Error("Cannot add Google Analytics without a closing head tag.");
+  await writeFile("dist/index.html", html.replace(closingHead, `${tag}\n  </head>`));
 }
 
 await copyFile("dist/index.html", "dist/make/index.html");
