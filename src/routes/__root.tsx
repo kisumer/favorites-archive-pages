@@ -66,7 +66,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
-      { title: "최애 아카이브 · 연말결산 제작소" },
+      { title: "최애 아카이브" },
       {
         name: "description",
         content: "열두 달의 최애를 한 장에. 로그인 없이 바로 만드는 월별 최애 취향표·연말결산 이미지 메이커.",
@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "최애 아카이브" },
       { property: "og:site_name", content: "최애 아카이브" },
       { property: "og:locale", content: "ko_KR" },
-      { property: "og:title", content: "최애 아카이브 · 연말결산 제작소" },
+      { property: "og:title", content: "최애 아카이브" },
       {
         property: "og:description",
         content: "열두 달의 최애를 한 장에. 로그인 없이 바로 만드는 월별 최애 취향표.",

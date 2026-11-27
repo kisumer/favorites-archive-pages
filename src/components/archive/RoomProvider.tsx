@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import {
   fetchRoom,
+  ROOM_TTL_MS,
   saveRecentRoom,
   subscribeRoom,
   syncYearDiff,
@@ -19,6 +20,8 @@ interface RoomMetaContextValue {
   roomId: string;
   dbUrl: string;
   connectionStatus: RoomConnectionStatus;
+  updatedAt: number;
+  expiresAt: number;
 }
 
 const RoomMetaContext = createContext<RoomMetaContextValue | null>(null);
@@ -50,6 +53,7 @@ export function RoomProvider({
   const [images, setImages] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [connectionStatus, setConnectionStatus] = useState<RoomConnectionStatus>("connecting");
+  const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const stateRef = useRef<ArchiveState | null>(null);
@@ -83,6 +87,7 @@ export function RoomProvider({
         stateRef.current = initialState;
         setState(initialState);
         setImages(initial.images);
+        setUpdatedAt(initial.updatedAt);
         setConnectionStatus("connected");
 
         saveRecentRoom({
@@ -108,6 +113,7 @@ export function RoomProvider({
             stateRef.current = nextState;
             setState(nextState);
             setImages((prevImgs) => ({ ...prevImgs, ...incoming.images }));
+            setUpdatedAt(incoming.updatedAt);
             saveRecentRoom({
               roomId,
               title: incoming.yearData.title || `${incoming.yearData.year} 최애 연말결산`,
@@ -141,6 +147,7 @@ export function RoomProvider({
       setSaveStatus("saving");
       try {
         await syncYearDiff(dbUrl, roomId, prevYear, nextYear);
+        setUpdatedAt(Date.now());
         setSaveStatus("saved");
         saveRecentRoom({
           roomId,
@@ -213,6 +220,7 @@ export function RoomProvider({
       setSaveStatus("saving");
       try {
         await uploadRoomImage(dbUrl, roomId, id, data);
+        setUpdatedAt(Date.now());
         setSaveStatus("saved");
         return id;
       } catch (e) {
@@ -237,7 +245,9 @@ export function RoomProvider({
   if (!state) return <>{loading}</>;
 
   return (
-    <RoomMetaContext.Provider value={{ roomId, dbUrl, connectionStatus }}>
+    <RoomMetaContext.Provider
+      value={{ roomId, dbUrl, connectionStatus, updatedAt, expiresAt: updatedAt + ROOM_TTL_MS }}
+    >
       <ArchiveContext.Provider
         value={{
           state,

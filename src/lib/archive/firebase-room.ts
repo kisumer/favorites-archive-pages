@@ -4,6 +4,11 @@ import type { BadgeMode, Category, MonthPick, YearData } from "./types";
 
 const DB_URL_STORAGE_KEY = "choiae:together:dbUrl";
 const RECENT_ROOMS_KEY = "choiae:together:recentRooms";
+export const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+
+export function isRoomExpired(updatedAt: number, now: number = Date.now()): boolean {
+  return Number.isFinite(updatedAt) && now - updatedAt >= ROOM_TTL_MS;
+}
 
 export interface RecentRoom {
   roomId: string;
@@ -178,12 +183,16 @@ function normalizeCategory(raw: unknown, id: string, index: number): Category {
   };
 }
 
-export function roomRecordToYearData(raw: unknown): { yearData: YearData; images: Record<string, string> } | null {
+export function roomRecordToYearData(
+  raw: unknown,
+): { yearData: YearData; images: Record<string, string>; updatedAt: number } | null {
   const r = asRecord(raw);
   if (!r) return null;
   const rawYear = Number(r["year"]);
   const year = isValidYear(rawYear) ? rawYear : new Date().getFullYear();
   const title = str(r["title"], LIMITS.title);
+  const rawUpdatedAt = Number(r["updatedAt"]);
+  const updatedAt = Number.isFinite(rawUpdatedAt) && rawUpdatedAt > 0 ? rawUpdatedAt : Date.now();
   const rawCats = asRecord(r["categories"]) ?? {};
   const rawOrder = Array.isArray(r["categoryOrder"])
     ? r["categoryOrder"].filter((x): x is string => typeof x === "string")
@@ -218,6 +227,7 @@ export function roomRecordToYearData(raw: unknown): { yearData: YearData; images
       categories,
     },
     images,
+    updatedAt,
   };
 }
 
@@ -281,13 +291,23 @@ export async function createRoom(
   };
 }
 
+export async function deleteRoom(dbUrl: string, roomId: string): Promise<void> {
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "DELETE");
+}
+
 export async function fetchRoom(
   dbUrl: string,
   roomId: string,
-): Promise<{ yearData: YearData; images: Record<string, string> } | null> {
+): Promise<{ yearData: YearData; images: Record<string, string>; updatedAt: number } | null> {
   const raw = await rtdbRequest<unknown>(`${dbUrl}/rooms/${roomId}.json`, "GET");
   if (!raw) return null;
-  return roomRecordToYearData(raw);
+  const parsed = roomRecordToYearData(raw);
+  if (!parsed) return null;
+  if (isRoomExpired(parsed.updatedAt)) {
+    await deleteRoom(dbUrl, roomId).catch(() => undefined);
+    throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
+  }
+  return parsed;
 }
 
 export async function uploadRoomImage(
@@ -296,7 +316,10 @@ export async function uploadRoomImage(
   imageId: string,
   dataUrl: string,
 ): Promise<void> {
-  await rtdbRequest(`${dbUrl}/rooms/${roomId}/images/${encodeURIComponent(imageId)}.json`, "PUT", dataUrl);
+  await Promise.all([
+    rtdbRequest(`${dbUrl}/rooms/${roomId}/images/${encodeURIComponent(imageId)}.json`, "PUT", dataUrl),
+    rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PATCH", { updatedAt: Date.now() }),
+  ]);
 }
 
 /**
@@ -329,10 +352,6 @@ export async function syncYearDiff(
   if (JSON.stringify(prevOrder) !== JSON.stringify(nextOrder)) {
     rootPatch["categoryOrder"] = nextOrder;
     hasRootPatch = true;
-  }
-
-  if (hasRootPatch) {
-    ops.push(rtdbRequest(`${base}.json`, "PATCH", rootPatch));
   }
 
   const prevMap = new Map(prev.categories.map((c) => [c.id, c]));
@@ -395,6 +414,10 @@ export async function syncYearDiff(
         );
       }
     }
+  }
+
+  if (hasRootPatch || ops.length > 0) {
+    ops.push(rtdbRequest(`${base}.json`, "PATCH", rootPatch));
   }
 
   await Promise.all(ops);
@@ -460,7 +483,7 @@ export function applyRtdbEvent(
 export function subscribeRoom(
   dbUrl: string,
   roomId: string,
-  onData: (parsed: { yearData: YearData; images: Record<string, string> }) => void,
+  onData: (parsed: { yearData: YearData; images: Record<string, string>; updatedAt: number }) => void,
   onStatus: (status: "connected" | "reconnecting" | "error") => void,
 ): () => void {
   let rawRoom: Record<string, unknown> = {};

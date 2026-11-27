@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "최애 아카이브 · 월별 최애 연말결산 메이커" },
+      { title: "최애 아카이브" },
       {
         name: "description",
         content:
           "열두 달의 최애를 한 장에. 참여자별로 달마다 최애 사진을 채우면 연말결산 취향표 이미지가 완성돼요. 로그인 없이 무료로.",
       },
-      { property: "og:title", content: "최애 아카이브 · 월별 최애 연말결산 메이커" },
+      { property: "og:title", content: "최애 아카이브" },
       {
         property: "og:description",
         content: "열두 달의 최애를 한 장에. 로그인 없이 바로 만드는 연말결산 취향표.",
@@ -61,7 +61,7 @@ function Landing() {
           />
           <div className="relative text-center lg:text-left">
             <p className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-lemon px-3 py-1 text-[12px] font-black tracking-wide shadow-pop">
-              ★ 연말결산 제작소
+              <span aria-hidden="true">★</span>
             </p>
             <h1 className="mt-5 text-[2.6rem] font-black leading-[1.08] tracking-tight sm:text-6xl">
               열두 달의 최애를
