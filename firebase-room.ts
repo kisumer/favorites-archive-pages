@@ -236,16 +236,36 @@ async function rtdbRequest<T = unknown>(
   method: "GET" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(
-    url,
+  const init: RequestInit =
     body === undefined
-      ? { method }
+      ? { method, cache: "no-store" }
       : {
           method,
+          cache: "no-store",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
-        },
-  );
+        };
+
+  let res: Response | null = null;
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      res = await fetch(url, init);
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+    }
+  }
+  if (!res) {
+    throw new Error(
+      lastErr instanceof Error && lastErr.message !== "Load failed"
+        ? lastErr.message
+        : "네트워크 연결이 잠시 끊겼어요. 다시 시도해 주세요.",
+    );
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     if (res.status === 401 || res.status === 403) {
@@ -316,10 +336,10 @@ export async function uploadRoomImage(
   imageId: string,
   dataUrl: string,
 ): Promise<void> {
-  await Promise.all([
-    rtdbRequest(`${dbUrl}/rooms/${roomId}/images/${encodeURIComponent(imageId)}.json`, "PUT", dataUrl),
-    rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PATCH", { updatedAt: Date.now() }),
-  ]);
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PATCH", {
+    [`images/${imageId}`]: dataUrl,
+    updatedAt: Date.now(),
+  });
 }
 
 /**
