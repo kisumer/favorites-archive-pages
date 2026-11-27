@@ -45,7 +45,7 @@ export function normalizeDbUrl(raw: string): string | null {
   }
 }
 
-const DEFAULT_DB_URL = "https://favorite-archive-default-rtdb.firebaseio.com";
+const DEFAULT_DB_URL = "https://fav-932a6-default-rtdb.firebaseio.com";
 
 export function getEnvDbUrl(): string | null {
   const raw = import.meta.env["VITE_FIREBASE_DB_URL"] as string | undefined;
@@ -305,6 +305,8 @@ export async function createRoom(
   };
 
   await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PUT", payload);
+  // Increment cumulative room counter (best-effort; never blocks room creation)
+  void rtdbRequest(`${dbUrl}/total.json`, "PUT", { ".sv": { increment: 1 } }).catch(() => undefined);
   return {
     roomId,
     yearData: { year: y.year, title: "", author: "", categories: [firstCat] },
@@ -376,7 +378,13 @@ export async function fetchMissingImages(
 export async function fetchRoom(
   dbUrl: string,
   roomId: string,
-): Promise<{ yearData: YearData; images: Record<string, string>; updatedAt: number } | null> {
+  cachedImages: Record<string, string> = {},
+): Promise<{
+  yearData: YearData;
+  images: Record<string, string>;
+  newlyFetchedImages: Record<string, string>;
+  updatedAt: number;
+} | null> {
   const meta = await fetchRoomMeta(dbUrl, roomId);
   if (!meta) return null;
   if (isRoomExpired(meta.updatedAt)) {
@@ -384,8 +392,14 @@ export async function fetchRoom(
     throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
   }
   const neededIds = collectYearImageIds(meta.yearData);
-  const images = await fetchMissingImages(dbUrl, roomId, neededIds);
-  return { yearData: meta.yearData, images, updatedAt: meta.updatedAt };
+  const missingIds = neededIds.filter((id) => !cachedImages[id]);
+  const newlyFetchedImages = await fetchMissingImages(dbUrl, roomId, missingIds);
+  const images: Record<string, string> = {};
+  for (const id of neededIds) {
+    const data = newlyFetchedImages[id] ?? cachedImages[id];
+    if (data) images[id] = data;
+  }
+  return { yearData: meta.yearData, images, newlyFetchedImages, updatedAt: meta.updatedAt };
 }
 
 export async function uploadRoomImage(
