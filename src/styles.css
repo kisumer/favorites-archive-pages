@@ -11,6 +11,8 @@
 @theme inline {
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --font-display: "Space Grotesk", "Pretendard Variable", Pretendard, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-serif: "Noto Serif KR", "Nanum Myeongjo", AppleMyungjo, serif;
 
   --radius-sm: calc(var(--radius) - 6px);
@@ -189,5 +191,114 @@
   }
   75% {
     transform: rotate(6deg);
+  }
+}
+
+/* Landing 3D Editorial Animations */
+.landing-header-pill {
+  background-color: #ffffff;
+  border: 1px solid #e2e2dc;
+  border-radius: 9999px;
+  box-shadow: 0 4px 16px rgba(20, 20, 20, 0.045);
+  transition:
+    border-radius 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, box-shadow;
+}
+
+.landing-header-pill.is-open {
+  border-radius: 24px;
+  box-shadow: 0 16px 38px rgba(20, 20, 20, 0.09);
+}
+
+.landing-pill-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease;
+}
+
+.landing-header-pill.is-open .landing-pill-drawer {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.landing-pill-plus {
+  transition:
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.landing-header-pill.is-open .landing-pill-plus {
+  transform: rotate(45deg);
+  background-color: #141414;
+  color: #ffffff;
+  border-color: #141414;
+}
+
+@keyframes landingSlotRiseIn {
+  0% {
+    transform: translate3d(0, 110%, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes landingSlotRollOut {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -110%, 0);
+    opacity: 0;
+  }
+}
+
+.landing-char-enter {
+  animation: landingSlotRiseIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.landing-char-exit {
+  animation: landingSlotRollOut 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.landing-contact-shadow {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  width: 126px;
+  height: 24px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(20, 20, 20, 0.16) 0%,
+    rgba(20, 20, 20, 0.06) 45%,
+    rgba(20, 20, 20, 0) 75%
+  );
+  filter: blur(5px);
+  transform: translateX(-50%) scale(1);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.landing-sparkle-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 35;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-char-enter,
+  .landing-char-exit {
+    animation-duration: 0.01ms !important;
   }
 }
