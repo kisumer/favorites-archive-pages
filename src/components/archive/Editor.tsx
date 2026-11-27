@@ -105,10 +105,10 @@ function Editor() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 lg:px-8">
-          <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0">
-            <Wordmark />
+      <header className="sticky top-0 z-30 bg-background/80 px-4 pb-2 pt-3 backdrop-blur-sm lg:px-8">
+        <div className="mx-auto flex h-[52px] max-w-[1600px] items-center gap-3 rounded-full border border-[#E2E2DC] bg-white/95 px-3.5 shadow-[0_4px_16px_rgba(20,20,20,0.045)]">
+          <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0 pl-0.5">
+            <Wordmark suffix={String(year.year)} />
           </Link>
           <div className="hidden sm:block">
             <SaveBadge />
@@ -116,14 +116,21 @@ function Editor() {
           <div className="ml-auto flex items-center gap-1.5">
             <Link
               to="/together/"
-              className="inline-flex h-9 items-center rounded-full bg-[var(--yellow-soft)] px-3.5 text-[13px] font-bold text-[var(--ink-black)] transition-colors hover:brightness-95"
+              className="inline-flex h-8 items-center rounded-full bg-[var(--yellow-soft)] px-3.5 text-[12.5px] font-bold text-[var(--ink-black)] transition-colors hover:brightness-95"
             >
               함께 만들기
             </Link>
-            <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="사용 방법" title="사용 방법">
+            <Button
+              variant="ghost"
+              size="iconSm"
+              onClick={() => setHelpOpen(true)}
+              aria-label="사용 방법"
+              title="사용 방법"
+              className="rounded-full"
+            >
               <CircleHelp aria-hidden="true" />
             </Button>
-            <Button variant="popInk" size="sm" onClick={openExport} className="hidden lg:inline-flex">
+            <Button variant="popInk" size="sm" onClick={openExport} className="hidden h-8 rounded-full px-3.5 lg:inline-flex">
               <Download aria-hidden="true" />
               이미지 저장
             </Button>

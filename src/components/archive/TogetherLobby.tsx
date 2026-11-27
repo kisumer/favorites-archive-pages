@@ -75,15 +75,15 @@ export function TogetherLobby({
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--bg-page)] text-[var(--ink-black)]">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-[var(--border-soft)] bg-[var(--bg-card)]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
-          <Link to="/" aria-label="최애 아카이브 처음 화면">
-            <Wordmark />
+      <header className="sticky top-0 z-20 bg-[var(--bg-page)]/80 px-5 pb-2 pt-3 backdrop-blur-sm">
+        <div className="mx-auto flex h-[52px] max-w-5xl items-center justify-between rounded-full border border-[#E2E2DC] bg-white/95 px-3.5 shadow-[0_4px_16px_rgba(20,20,20,0.045)]">
+          <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0 pl-0.5">
+            <Wordmark suffix="TOGETHER" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Link
               to="/make/"
-              className="inline-flex h-9 items-center rounded-full border border-[var(--border-soft)] bg-white px-4 text-[13px] font-bold text-[var(--ink-black)] transition-colors hover:border-[var(--ink-black)]"
+              className="inline-flex h-8 items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-page)] px-3.5 text-[12.5px] font-bold text-[var(--ink-black)] transition-colors hover:border-[var(--ink-black)] hover:bg-white"
             >
               혼자 만들기
             </Link>
@@ -94,6 +94,7 @@ export function TogetherLobby({
                 onClick={() => setShowSettings((v) => !v)}
                 aria-label="데이터베이스 설정"
                 title="데이터베이스 설정"
+                className="rounded-full"
               >
                 <Settings aria-hidden="true" />
               </Button>

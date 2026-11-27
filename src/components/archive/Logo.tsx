@@ -48,11 +48,29 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({ className, suffix }: { className?: string; suffix?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <LogoMark className="h-9 w-9 text-[28px]" />
-      <span className="text-[17px] font-black leading-none tracking-tight">최애 아카이브</span>
+    <span className={cn("inline-flex min-w-0 items-center gap-2", className)}>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--yellow-soft)]">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 text-[var(--yellow-main)]"
+          fill="currentColor"
+          stroke="var(--ink-black)"
+          strokeWidth="1.3"
+          aria-hidden="true"
+        >
+          <path d="M12 1.5L14.5 8.2L21.5 6.5L17.4 12L21.5 17.5L14.5 15.8L12 22.5L9.5 15.8L2.5 17.5L6.6 12L2.5 6.5L9.5 8.2Z" />
+        </svg>
+      </span>
+      <span className="truncate text-[14px] font-extrabold leading-none tracking-[-0.025em] text-[var(--ink-black)]">
+        최애 아카이브
+      </span>
+      {suffix ? (
+        <span className="hidden font-mono text-[11.5px] font-semibold text-[var(--ink-muted)] sm:inline">
+          · {suffix}
+        </span>
+      ) : null}
     </span>
   );
 }

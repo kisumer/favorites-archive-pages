@@ -291,26 +291,34 @@ function TogetherRoomEditor({ roomId, onLeave }: { roomId: string; onLeave: () =
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 lg:px-8">
-          <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0">
-            <Wordmark />
+      <header className="sticky top-0 z-30 bg-background/80 px-4 pb-2 pt-3 backdrop-blur-sm lg:px-8">
+        <div className="mx-auto flex h-[52px] max-w-[1600px] items-center gap-2.5 rounded-full border border-[#E2E2DC] bg-white/95 px-3.5 shadow-[0_4px_16px_rgba(20,20,20,0.045)]">
+          <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0 pl-0.5">
+            <Wordmark suffix={String(year.year)} />
           </Link>
-          <span className="hidden rounded-full bg-[var(--yellow-soft)] px-3 py-1 text-[11px] font-bold text-[var(--ink-black)] sm:inline-flex">
+          <span className="hidden rounded-full bg-[var(--yellow-soft)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--ink-black)] sm:inline-flex">
             함께 만들기
           </span>
           <div className="hidden sm:block">
             <SyncBadge />
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            <Link to="/make/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <Link
+              to="/make/"
+              className="inline-flex h-8 items-center rounded-full px-3 text-[12.5px] font-bold text-[var(--ink-muted)] transition-colors hover:bg-[var(--bg-input)] hover:text-[var(--ink-black)]"
+            >
               혼자 만들기
             </Link>
-            <Button variant="outline" size="sm" onClick={copyInvite}>
+            <Button variant="outline" size="sm" onClick={copyInvite} className="h-8 rounded-full px-3">
               {copied ? <Check aria-hidden="true" /> : <Link2 aria-hidden="true" />}
               <span className="hidden sm:inline">{copied ? "복사됨" : "초대 링크"}</span>
             </Button>
-            <Button variant="popInk" size="sm" onClick={() => setExportOpen(true)} className="hidden lg:inline-flex">
+            <Button
+              variant="popInk"
+              size="sm"
+              onClick={() => setExportOpen(true)}
+              className="hidden h-8 rounded-full px-3.5 lg:inline-flex"
+            >
               <Download aria-hidden="true" />
               이미지 저장
             </Button>
