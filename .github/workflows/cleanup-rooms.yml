@@ -1,0 +1,19 @@
+name: Cleanup Expired Rooms
+
+on:
+  schedule:
+    - cron: "0 18 * * *" # 매일 새벽 3시 (KST)
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/cleanup-rooms.mjs
+        env:
+          FIREBASE_DB_URL: ${{ vars.VITE_FIREBASE_DB_URL }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
