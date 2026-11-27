@@ -11,6 +11,11 @@ import {
 } from "@/lib/archive/firebase-room";
 import { compressImage, type PhotoCrop } from "@/lib/archive/image";
 import { uid } from "@/lib/archive/model";
+import {
+  deleteCachedRoomImages,
+  loadCachedRoomImages,
+  saveCachedRoomImages,
+} from "@/lib/archive/room-image-cache";
 import type { ArchiveState, Result, YearData } from "@/lib/archive/types";
 import { ArchiveContext, type SaveStatus, type Updater } from "./ArchiveProvider";
 
@@ -73,12 +78,18 @@ export function RoomProvider({
 
     (async () => {
       try {
-        const initial = await fetchRoom(dbUrl, roomId);
+        const cachedImages = await loadCachedRoomImages(roomId);
+        if (cancelled) return;
+        const initial = await fetchRoom(dbUrl, roomId, cachedImages);
         if (cancelled) return;
         if (!initial) {
+          void deleteCachedRoomImages(roomId);
           setLoadError("존재하지 않거나 삭제된 방이에요.");
           setConnectionStatus("error");
           return;
+        }
+        if (Object.keys(initial.newlyFetchedImages).length > 0) {
+          void saveCachedRoomImages(roomId, initial.newlyFetchedImages);
         }
         const initialState: ArchiveState = {
           version: 1,
@@ -110,6 +121,7 @@ export function RoomProvider({
             if (Object.keys(incoming.images).length > 0) {
               imagesRef.current = { ...imagesRef.current, ...incoming.images };
               setImages(imagesRef.current);
+              void saveCachedRoomImages(roomId, incoming.images);
             }
             // Preserve local pending/in-flight edits so slow mobile networks don't overwrite them
             if (syncTimerRef.current !== null || inFlightRef.current > 0) return;
@@ -229,6 +241,7 @@ export function RoomProvider({
       const id = uid();
       imagesRef.current = { ...imagesRef.current, [id]: data };
       setImages(imagesRef.current);
+      void saveCachedRoomImages(roomId, { [id]: data });
       inFlightRef.current += 1;
       setSaveStatus("saving");
       try {

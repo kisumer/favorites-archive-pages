@@ -376,7 +376,13 @@ export async function fetchMissingImages(
 export async function fetchRoom(
   dbUrl: string,
   roomId: string,
-): Promise<{ yearData: YearData; images: Record<string, string>; updatedAt: number } | null> {
+  cachedImages: Record<string, string> = {},
+): Promise<{
+  yearData: YearData;
+  images: Record<string, string>;
+  newlyFetchedImages: Record<string, string>;
+  updatedAt: number;
+} | null> {
   const meta = await fetchRoomMeta(dbUrl, roomId);
   if (!meta) return null;
   if (isRoomExpired(meta.updatedAt)) {
@@ -384,8 +390,14 @@ export async function fetchRoom(
     throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
   }
   const neededIds = collectYearImageIds(meta.yearData);
-  const images = await fetchMissingImages(dbUrl, roomId, neededIds);
-  return { yearData: meta.yearData, images, updatedAt: meta.updatedAt };
+  const missingIds = neededIds.filter((id) => !cachedImages[id]);
+  const newlyFetchedImages = await fetchMissingImages(dbUrl, roomId, missingIds);
+  const images: Record<string, string> = {};
+  for (const id of neededIds) {
+    const data = newlyFetchedImages[id] ?? cachedImages[id];
+    if (data) images[id] = data;
+  }
+  return { yearData: meta.yearData, images, newlyFetchedImages, updatedAt: meta.updatedAt };
 }
 
 export async function uploadRoomImage(
