@@ -25,6 +25,7 @@ interface RoomMetaContextValue {
   roomId: string;
   dbUrl: string;
   connectionStatus: RoomConnectionStatus;
+  createdAt: number;
   updatedAt: number;
   expiresAt: number;
 }
@@ -58,6 +59,7 @@ export function RoomProvider({
   const [images, setImages] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [connectionStatus, setConnectionStatus] = useState<RoomConnectionStatus>("connecting");
+  const [createdAt, setCreatedAt] = useState<number>(() => Date.now());
   const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -101,6 +103,7 @@ export function RoomProvider({
         imagesRef.current = initial.images;
         setState(initialState);
         setImages(initial.images);
+        setCreatedAt(initial.createdAt);
         setUpdatedAt(initial.updatedAt);
         setConnectionStatus("connected");
 
@@ -274,7 +277,7 @@ export function RoomProvider({
 
   return (
     <RoomMetaContext.Provider
-      value={{ roomId, dbUrl, connectionStatus, updatedAt, expiresAt: updatedAt + ROOM_TTL_MS }}
+      value={{ roomId, dbUrl, connectionStatus, createdAt, updatedAt, expiresAt: createdAt + ROOM_TTL_MS }}
     >
       <ArchiveContext.Provider
         value={{

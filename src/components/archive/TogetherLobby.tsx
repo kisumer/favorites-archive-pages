@@ -111,7 +111,7 @@ export function TogetherLobby({
             공유 링크만 보내면 로그인 없이 누구나 자기 칸에 사진과 최애를 채울 수 있어요.
           </p>
           <p className="mx-auto mt-1.5 text-[12px] font-bold text-muted-foreground">
-            방은 마지막 수정 후 24시간이 지나면 자동으로 삭제돼요. 완성 후 이미지를 꼭 저장해 주세요!
+            방은 생성 후 24시간이 지나면 자동으로 삭제돼요. 완성 후 이미지를 꼭 저장해 주세요!
           </p>
         </div>
 

@@ -14,6 +14,7 @@ function entryFor(id: string, src: string): Entry {
   const existing = cache.get(id);
   if (existing && existing.src === src) return existing;
   const img = new Image();
+  if (/^https?:\/\//i.test(src)) img.crossOrigin = "anonymous";
   const entry: Entry = {
     src,
     img,
@@ -88,7 +89,7 @@ export async function renderPosterBlob(
   theme: ThemeId,
   images: Record<string, string>,
 ): Promise<{ blob: Blob; width: number; height: number }> {
-  await ensurePosterFonts(collectPosterText(year));
+  await ensurePosterFonts(collectPosterText(year), year.font ?? "default", year.customFontCss);
   const loaded = new Map<string, HTMLImageElement>();
   await Promise.all(
     imageIdsForYear(year).map(async (id) => {

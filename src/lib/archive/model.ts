@@ -1,3 +1,4 @@
+import { MAX_CUSTOM_FONT_CSS, normalizePosterFont, sanitizeCustomFontCss } from "./fonts";
 import { CATEGORY_COLORS, isHexColor } from "./palette";
 import type {
   ArchiveState,
@@ -173,7 +174,7 @@ export function deleteYear(state: ArchiveState, year: number): Result {
 export function updateYearMeta(
   state: ArchiveState,
   year: number,
-  patch: Partial<Pick<YearData, "title" | "author">>,
+  patch: Partial<Pick<YearData, "title" | "author" | "font" | "customFontCss">>,
 ): Result {
   if (!getYear(state, year)) return { ok: false, error: "해당 연도를 찾을 수 없어요." };
   return { ok: true, state: mapYear(state, year, (y) => ({ ...y, ...patch })) };
@@ -419,11 +420,18 @@ export function normalizeState(raw: unknown): ArchiveState | null {
     const coauthors = Array.isArray(y["coauthors"])
       ? y["coauthors"].map((name) => str(name, LIMITS.author))
       : [];
+    const font = y["font"] ? normalizePosterFont(y["font"]) : undefined;
+    const customFontCss =
+      typeof y["customFontCss"] === "string"
+        ? sanitizeCustomFontCss(y["customFontCss"].slice(0, MAX_CUSTOM_FONT_CSS))
+        : "";
     years.push({
       year,
       title: str(y["title"], LIMITS.title),
       author: str(y["author"], LIMITS.author),
       ...(coauthors.length ? { coauthors } : {}),
+      ...(font && font !== "default" ? { font } : {}),
+      ...(customFontCss ? { customFontCss } : {}),
       categories,
     });
   }

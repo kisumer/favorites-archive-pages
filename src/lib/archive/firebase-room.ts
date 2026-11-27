@@ -1,6 +1,7 @@
+import { MAX_CUSTOM_FONT_CSS, normalizePosterFont, sanitizeCustomFontCss } from "./fonts";
 import { CATEGORY_COLORS, isHexColor } from "./palette";
 import { createDefaultState, emptyMonths, isValidYear, LIMITS, MONTH_COUNT, uid } from "./model";
-import type { BadgeMode, Category, MonthPick, YearData } from "./types";
+import type { BadgeMode, Category, MonthPick, PosterFontId, YearData } from "./types";
 
 const DB_URL_STORAGE_KEY = "choiae:together:dbUrl";
 const RECENT_ROOMS_KEY = "choiae:together:recentRooms";
@@ -21,9 +22,12 @@ export interface RoomRecord {
   version: 1;
   year: number;
   title: string;
+  font?: PosterFontId;
+  customFontCss?: string;
   categoryOrder: string[];
   categories: Record<string, Category>;
   images: Record<string, string>;
+  createdAt: number;
   updatedAt: number;
 }
 
@@ -185,7 +189,7 @@ function normalizeCategory(raw: unknown, id: string, index: number): Category {
 
 export function roomRecordToYearData(
   raw: unknown,
-): { yearData: YearData; images: Record<string, string>; updatedAt: number } | null {
+): { yearData: YearData; images: Record<string, string>; createdAt: number; updatedAt: number } | null {
   const r = asRecord(raw);
   if (!r) return null;
   const rawYear = Number(r["year"]);
@@ -193,6 +197,8 @@ export function roomRecordToYearData(
   const title = str(r["title"], LIMITS.title);
   const rawUpdatedAt = Number(r["updatedAt"]);
   const updatedAt = Number.isFinite(rawUpdatedAt) && rawUpdatedAt > 0 ? rawUpdatedAt : Date.now();
+  const rawCreatedAt = Number(r["createdAt"]);
+  const createdAt = Number.isFinite(rawCreatedAt) && rawCreatedAt > 0 ? rawCreatedAt : updatedAt;
   const rawCats = asRecord(r["categories"]) ?? {};
   const rawOrder = Array.isArray(r["categoryOrder"])
     ? r["categoryOrder"].filter((x): x is string => typeof x === "string")
@@ -214,19 +220,28 @@ export function roomRecordToYearData(
   const rawImages = asRecord(r["images"]) ?? {};
   const images: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawImages)) {
-    if (typeof v === "string" && v.startsWith("data:image/")) {
+    if (isValidImageValue(v)) {
       images[k] = v;
     }
   }
+
+  const font = r["font"] ? normalizePosterFont(r["font"]) : undefined;
+  const customFontCss =
+    typeof r["customFontCss"] === "string"
+      ? sanitizeCustomFontCss(r["customFontCss"].slice(0, MAX_CUSTOM_FONT_CSS))
+      : "";
 
   return {
     yearData: {
       year,
       title,
       author: "",
+      ...(font && font !== "default" ? { font } : {}),
+      ...(customFontCss ? { customFontCss } : {}),
       categories,
     },
     images,
+    createdAt,
     updatedAt,
   };
 }
@@ -273,8 +288,34 @@ async function rtdbRequest<T = unknown>(
     }
     throw new Error(`서버 요청 실패 (${res.status})${text ? `: ${text.slice(0, 80)}` : ""}`);
   }
-  if (method === "DELETE") return undefined as T;
+  if (method === "DELETE" || res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+async function adjustTotalRooms(dbUrl: string, delta: number): Promise<void> {
+  const url = `${dbUrl}/total.json`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const getRes = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers: { "X-Firebase-ETag": "true" },
+    });
+    if (!getRes.ok) return;
+    const etag = getRes.headers.get("ETag");
+    const raw = (await getRes.json()) as unknown;
+    const current = typeof raw === "number" && Number.isFinite(raw) ? raw : Number(raw) || 0;
+    const next = Math.max(0, current + delta);
+    const putHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (etag) putHeaders["if-match"] = etag;
+    const putRes = await fetch(`${url}?print=silent`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: putHeaders,
+      body: JSON.stringify(next),
+    });
+    if (putRes.ok) return;
+    if (putRes.status !== 412) return;
+  }
 }
 
 export async function createRoom(
@@ -294,6 +335,7 @@ export async function createRoom(
     months: emptyMonths(),
   };
 
+  const now = Date.now();
   const payload: RoomRecord = {
     version: 1,
     year: y.year,
@@ -301,10 +343,12 @@ export async function createRoom(
     categoryOrder: [firstCat.id],
     categories: { [firstCat.id]: firstCat },
     images: {},
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
   };
 
-  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PUT", payload);
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json?print=silent`, "PUT", payload);
+  void adjustTotalRooms(dbUrl, 1).catch(() => undefined);
   return {
     roomId,
     yearData: { year: y.year, title: "", author: "", categories: [firstCat] },
@@ -313,6 +357,7 @@ export async function createRoom(
 
 export async function deleteRoom(dbUrl: string, roomId: string): Promise<void> {
   await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "DELETE");
+  void adjustTotalRooms(dbUrl, -1).catch(() => undefined);
 }
 
 export function collectYearImageIds(yearData: YearData): string[] {
@@ -329,19 +374,57 @@ export function collectYearImageIds(yearData: YearData): string[] {
 export async function fetchRoomMeta(
   dbUrl: string,
   roomId: string,
-): Promise<{ yearData: YearData; updatedAt: number } | null> {
+): Promise<{ yearData: YearData; createdAt: number; updatedAt: number } | null> {
   const base = `${dbUrl}/rooms/${roomId}`;
-  const [year, title, categoryOrder, categories, updatedAt] = await Promise.all([
+  const [year, title, font, customFontCss, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
     rtdbRequest<unknown>(`${base}/year.json`, "GET"),
     rtdbRequest<unknown>(`${base}/title.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/font.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/customFontCss.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/createdAt.json`, "GET"),
     rtdbRequest<unknown>(`${base}/updatedAt.json`, "GET"),
   ]);
   if (year === null && categories === null && updatedAt === null) return null;
-  const parsed = roomRecordToYearData({ year, title, categoryOrder, categories, updatedAt });
+  const parsed = roomRecordToYearData({
+    year,
+    title,
+    font,
+    customFontCss,
+    categoryOrder,
+    categories,
+    createdAt,
+    updatedAt,
+  });
   if (!parsed) return null;
-  return { yearData: parsed.yearData, updatedAt: parsed.updatedAt };
+  return { yearData: parsed.yearData, createdAt: parsed.createdAt, updatedAt: parsed.updatedAt };
+}
+
+const CLOUDINARY_CLOUD_NAME = "tujyc4sp";
+const CLOUDINARY_UPLOAD_PRESET = "fav_ach";
+
+function isValidImageValue(v: unknown): v is string {
+  return typeof v === "string" && (v.startsWith("data:image/") || v.startsWith("https://"));
+}
+
+async function uploadImageToCloudinary(dataUrl: string): Promise<string | null> {
+  try {
+    const form = new FormData();
+    form.append("file", dataUrl);
+    form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: "POST", body: form },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as { secure_url?: unknown };
+    return typeof json.secure_url === "string" && json.secure_url.startsWith("https://")
+      ? json.secure_url
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchMissingImages(
@@ -357,7 +440,7 @@ export async function fetchMissingImages(
           `${dbUrl}/rooms/${roomId}/images/${encodeURIComponent(id)}.json`,
           "GET",
         );
-        if (typeof data === "string" && data.startsWith("data:image/")) {
+        if (isValidImageValue(data)) {
           return [id, data] as const;
         }
       } catch {
@@ -381,13 +464,14 @@ export async function fetchRoom(
   yearData: YearData;
   images: Record<string, string>;
   newlyFetchedImages: Record<string, string>;
+  createdAt: number;
   updatedAt: number;
 } | null> {
   const meta = await fetchRoomMeta(dbUrl, roomId);
   if (!meta) return null;
-  if (isRoomExpired(meta.updatedAt)) {
+  if (isRoomExpired(meta.createdAt)) {
     await deleteRoom(dbUrl, roomId).catch(() => undefined);
-    throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
+    throw new Error("방 생성 후 24시간이 지나 자동으로 삭제된 방이에요.");
   }
   const neededIds = collectYearImageIds(meta.yearData);
   const missingIds = neededIds.filter((id) => !cachedImages[id]);
@@ -397,7 +481,13 @@ export async function fetchRoom(
     const data = newlyFetchedImages[id] ?? cachedImages[id];
     if (data) images[id] = data;
   }
-  return { yearData: meta.yearData, images, newlyFetchedImages, updatedAt: meta.updatedAt };
+  return {
+    yearData: meta.yearData,
+    images,
+    newlyFetchedImages,
+    createdAt: meta.createdAt,
+    updatedAt: meta.updatedAt,
+  };
 }
 
 export async function uploadRoomImage(
@@ -405,11 +495,13 @@ export async function uploadRoomImage(
   roomId: string,
   imageId: string,
   dataUrl: string,
-): Promise<void> {
-  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PATCH", {
-    [`images/${imageId}`]: dataUrl,
+): Promise<string> {
+  const storedValue = (await uploadImageToCloudinary(dataUrl)) ?? dataUrl;
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json?print=silent`, "PATCH", {
+    [`images/${imageId}`]: storedValue,
     updatedAt: Date.now(),
   });
+  return storedValue;
 }
 
 /**
@@ -434,6 +526,14 @@ export async function syncYearDiff(
   }
   if (prev.year !== next.year) {
     rootPatch["year"] = next.year;
+    hasRootPatch = true;
+  }
+  if ((prev.font ?? "default") !== (next.font ?? "default")) {
+    rootPatch["font"] = next.font ?? "default";
+    hasRootPatch = true;
+  }
+  if ((prev.customFontCss ?? "") !== (next.customFontCss ?? "")) {
+    rootPatch["customFontCss"] = next.customFontCss ?? null;
     hasRootPatch = true;
   }
 

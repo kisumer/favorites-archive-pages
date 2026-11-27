@@ -2,10 +2,10 @@
  * The poster renderer. The live preview and the PNG export both call drawPoster(),
  * so what you see is exactly what you download.
  */
-import { FONT_POSTER_TITLE, FONT_SANS, FONT_SERIF } from "./fonts";
+import { FONT_POSTER_TITLE, FONT_SANS, FONT_SERIF, getPosterFont } from "./fonts";
 import { monthLabel } from "./model";
 import { RAINBOW, isDarkColor, tint } from "./palette";
-import type { Category, MonthPick, ThemeId, YearData } from "./types";
+import type { Category, MonthPick, PosterFontId, ThemeId, YearData } from "./types";
 
 export const POSTER_W = 1400;
 const PAD_X = 72;
@@ -272,35 +272,59 @@ function solid(ctx: Ctx, width: number) {
   ctx.setLineDash([]);
 }
 
+function resolveFont(theme: ThemeId, fontId?: PosterFontId, customFontCss?: string) {
+  if (!fontId || fontId === "default") {
+    return {
+      display: STYLES[theme].display,
+      body: FONT_SANS,
+      titleWeight: theme === "kitsch" ? 400 : 900,
+    };
+  }
+  const opt = getPosterFont(fontId, customFontCss);
+  return {
+    display: opt.displayFamily,
+    body: opt.bodyFamily,
+    titleWeight: opt.titleWeight,
+  };
+}
+
 function setPosterFont(ctx: Ctx, weight: number, size: number, family = FONT_SANS) {
   ctx.font = font(weight, size, family);
   if ("letterSpacing" in ctx) ctx.letterSpacing = `${(size * -0.025).toFixed(3)}px`;
 }
 
-function setTitleFont(ctx: Ctx, size: number, theme: ThemeId) {
-  setPosterFont(ctx, theme === "kitsch" ? 400 : 900, size, STYLES[theme].display);
+function setTitleFont(
+  ctx: Ctx,
+  size: number,
+  theme: ThemeId,
+  fontId?: PosterFontId,
+  customFontCss?: string,
+) {
+  const f = resolveFont(theme, fontId, customFontCss);
+  setPosterFont(ctx, f.titleWeight, size, f.display);
 }
 
 // ---------- layout ----------
 
 export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLayout {
+  const f = resolveFont(theme, year.font, year.customFontCss);
   let y = 76;
   const kickerY = y;
   if (theme === "editorial") y += 34 + 30;
   const title = defaultTitle(year);
   let titleSize = theme === "kitsch" ? 112 : 88;
   ctx.save();
-  setTitleFont(ctx, titleSize, theme);
+  setTitleFont(ctx, titleSize, theme, year.font, year.customFontCss);
   while (ctx.measureText(title).width > POSTER_W - PAD_X * 2 - 32 && titleSize > 40) {
     titleSize -= 4;
-    setTitleFont(ctx, titleSize, theme);
+    setTitleFont(ctx, titleSize, theme, year.font, year.customFontCss);
   }
   ctx.restore();
   const titleY = y + titleSize / 2;
   y += titleSize + 20;
   const authorY = y + 14;
   const names = participantNames(year);
-  setPosterFont(ctx, 600, 20);
+  setPosterFont(ctx, 600, 20, f.body);
   const authorLines = names ? wrapText(ctx, `by ${names}`, POSTER_W - PAD_X * 2, Infinity) : [];
   if (authorLines.length) y += 44 + (authorLines.length - 1) * 26;
   y += 64;
@@ -311,12 +335,11 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     const cover: Rect = { x: PAD_X, y: top + BADGE_OVER, w: COVER, h: COVER };
     const nameText = c.name.trim() || "이름 없음";
     let nameSize = theme === "kitsch" ? 24 : 26;
-    const nameFamily = STYLES[theme].display;
-    setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
+    setPosterFont(ctx, f.titleWeight, nameSize, f.display);
     const maxNameW = theme === "kitsch" ? COVER - 32 : COVER;
     while (ctx.measureText(nameText).width > maxNameW && nameSize > 10) {
       nameSize -= 1;
-      setPosterFont(ctx, theme === "kitsch" ? 400 : 900, nameSize, nameFamily);
+      setPosterFont(ctx, f.titleWeight, nameSize, f.display);
     }
     let name: Rect;
     if (theme === "kitsch") {
@@ -329,7 +352,7 @@ export function layoutPoster(ctx: Ctx, year: YearData, theme: ThemeId): PosterLa
     let bubble: Rect | null = null;
     let quoteLines: string[] = [];
     if (c.quote.trim()) {
-      setPosterFont(ctx, theme === "kitsch" ? 700 : 500, theme === "kitsch" ? 17 : 16);
+      setPosterFont(ctx, theme === "kitsch" ? 700 : 500, theme === "kitsch" ? 17 : 16, f.body);
       const w = theme === "kitsch" ? 210 : COVER;
       quoteLines = wrapText(ctx, c.quote.trim(), w - 36, 4);
       bubble = theme === "kitsch"
@@ -406,12 +429,13 @@ function centeredInk(ctx: Ctx, text: string) {
 
 function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
   const st = STYLES[theme];
+  const f = resolveFont(theme, year.font, year.customFontCss);
   const cx = POSTER_W / 2;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   if (theme === "kitsch") {
     ctx.save();
-    setTitleFont(ctx, L.titleSize, theme);
+    setTitleFont(ctx, L.titleSize, theme, year.font, year.customFontCss);
     const titleInk = centeredInk(ctx, L.title);
     const tw = titleInk.width;
     // highlighter swipe behind title
@@ -435,15 +459,15 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     ctx.moveTo(PAD_X, L.kickerY + 4);
     ctx.lineTo(POSTER_W - PAD_X, L.kickerY + 4);
     ctx.stroke();
-    setPosterFont(ctx, 700, 14);
+    setPosterFont(ctx, 700, 14, f.body);
     ctx.fillStyle = st.muted;
     ctx.fillText(`THE FAVORITES ARCHIVE  —  VOL. ${year.year}`, cx, L.kickerY + 30);
-    setTitleFont(ctx, L.titleSize, theme);
+    setTitleFont(ctx, L.titleSize, theme, year.font, year.customFontCss);
     ctx.fillStyle = st.ink;
     ctx.fillText(L.title, cx, L.titleY);
   }
   if (L.authorLines.length) {
-    setPosterFont(ctx, 600, 20);
+    setPosterFont(ctx, 600, 20, f.body);
     ctx.fillStyle = st.muted;
     L.authorLines.forEach((line, i) => ctx.fillText(line, cx, L.authorY + i * 26));
   }
@@ -455,8 +479,11 @@ function drawCover(
   CL: CategoryLayout,
   theme: ThemeId,
   getImage: ImageGetter,
+  fontId?: PosterFontId,
+  customFontCss?: string,
 ) {
   const st = STYLES[theme];
+  const f = resolveFont(theme, fontId, customFontCss);
   const r = CL.cover;
   const img = c.coverImageId ? getImage(c.coverImageId) : null;
   ctx.save();
@@ -480,7 +507,7 @@ function drawCover(
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    setPosterFont(ctx, 900, 54, theme === "kitsch" ? FONT_SANS : FONT_SERIF);
+    setPosterFont(ctx, f.titleWeight, 54, f.display);
     ctx.fillText(Array.from(CL.nameText)[0] ?? "★", ccx, ccy + 2);
   }
   ctx.restore();
@@ -504,13 +531,13 @@ function drawCover(
     ctx.setLineDash([]);
     ctx.fillStyle = st.ink;
     ctx.textAlign = "center";
-    setPosterFont(ctx, 400, CL.nameSize, st.display);
+    setPosterFont(ctx, f.titleWeight, CL.nameSize, f.display);
     const ink = centeredInk(ctx, CL.nameText);
     ctx.fillText(CL.nameText, x + w / 2 + ink.offsetX, y + h / 2 + ink.offsetY);
   } else {
     ctx.fillStyle = st.ink;
     ctx.textAlign = "left";
-    setPosterFont(ctx, 900, CL.nameSize, FONT_SERIF);
+    setPosterFont(ctx, f.titleWeight, CL.nameSize, f.display);
     ctx.fillText(CL.nameText, CL.name.x, CL.name.y + CL.name.h / 2);
   }
 
@@ -528,7 +555,7 @@ function drawCover(
       ctx.setLineDash([]);
       ctx.fillStyle = st.ink;
       ctx.textAlign = "center";
-      setPosterFont(ctx, 700, 17);
+      setPosterFont(ctx, 700, 17, f.body);
       CL.quoteLines.forEach((line, i) => {
         ctx.fillText(line, b.x + b.w / 2, b.y + 14 + 13 + i * 26);
       });
@@ -541,7 +568,7 @@ function drawCover(
       ctx.stroke();
       ctx.fillStyle = st.muted;
       ctx.textAlign = "left";
-      setPosterFont(ctx, 500, 16);
+      setPosterFont(ctx, 500, 16, f.body);
       CL.quoteLines.forEach((line, i) => {
         const text = `${i === 0 ? "“" : ""}${line}${i === CL.quoteLines.length - 1 ? "”" : ""}`;
         ctx.fillText(text, b.x + 16, b.y + 14 + 13 + i * 26);
@@ -557,8 +584,12 @@ function drawCell(
   cell: CellLayout,
   theme: ThemeId,
   getImage: ImageGetter,
+  fontId?: PosterFontId,
+  customFontCss?: string,
 ) {
   const st = STYLES[theme];
+  const f = resolveFont(theme, fontId, customFontCss);
+  const labelWeight = fontId === "pixel" || fontId === "custom" ? 700 : 800;
   const r = cell.rect;
   const m = cell.month;
   const img = pick.imageId ? getImage(pick.imageId) : null;
@@ -600,7 +631,7 @@ function drawCell(
     solid(ctx, 2.5);
     ctx.stroke();
     ctx.fillStyle = st.ink;
-    setPosterFont(ctx, 900, 19);
+    setPosterFont(ctx, labelWeight, 19, f.body);
     ctx.fillText(monthLabel(m), r.x + 10, r.y + 11, 43);
   } else {
     ctx.beginPath();
@@ -608,7 +639,7 @@ function drawCell(
     ctx.fillStyle = st.ink;
     ctx.fill();
     ctx.fillStyle = st.paper;
-    setPosterFont(ctx, 700, 13);
+    setPosterFont(ctx, 700, 13, f.body);
     ctx.fillText(monthLabel(m), r.x + 8, r.y + 9);
   }
 
@@ -618,11 +649,11 @@ function drawCell(
     const textColor = isDarkColor(color) ? "#FFFFFF" : st.ink;
     let size = theme === "kitsch" ? 16 : 14;
     const maxW = CELL * 1.02;
-    setPosterFont(ctx, 800, size);
+    setPosterFont(ctx, labelWeight, size, f.body);
     let text = pick.name.trim();
     while (ctx.measureText(text).width > maxW - 40 && size > 11) {
       size -= 1;
-      setPosterFont(ctx, 800, size);
+      setPosterFont(ctx, labelWeight, size, f.body);
     }
     text = ellipsize(ctx, text, maxW - 40);
     const tw = ctx.measureText(text).width;
@@ -663,7 +694,7 @@ function drawCell(
   }
 
   if (pick.caption.trim()) {
-    setPosterFont(ctx, 600, 13);
+    setPosterFont(ctx, 600, 13, f.body);
     ctx.fillStyle = st.muted;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -699,10 +730,10 @@ export function drawPoster(
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
     }
-    drawCover(ctx, c, CL, theme, getImage);
+    drawCover(ctx, c, CL, theme, getImage, year.font, year.customFontCss);
     for (const cell of CL.cells) {
       const pick = c.months[cell.month];
-      if (pick) drawCell(ctx, c, pick, cell, theme, getImage);
+      if (pick) drawCell(ctx, c, pick, cell, theme, getImage, year.font, year.customFontCss);
     }
   });
 

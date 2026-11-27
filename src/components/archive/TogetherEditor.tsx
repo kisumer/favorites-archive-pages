@@ -185,7 +185,7 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
           링크만 있으면 로그인 없이 바로 들어와 자기 칸을 채울 수 있어요.
         </p>
         <p className="mt-1 text-[11px] font-bold text-muted-foreground">
-          마지막 수정 후 24시간 뒤 자동 삭제 · {formatRemaining(expiresAt, now)}
+          방 생성 후 24시간 뒤 자동 삭제 · {formatRemaining(expiresAt, now)}
         </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           <Button variant="pop" size="sm" className="flex-1" onClick={copyInvite}>
@@ -234,6 +234,7 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
           />
         </div>
       </div>
+
     </Panel>
   );
 }

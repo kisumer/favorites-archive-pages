@@ -35,15 +35,17 @@ export function PosterPreview({ year, theme, images, onPick, className, label }:
   }, []);
 
   const text = collectPosterText(year);
+  const fontId = year.font ?? "default";
+  const customFontCss = year.customFontCss ?? "";
   useEffect(() => {
     let alive = true;
-    void ensurePosterFonts(text).then((changed) => {
+    void ensurePosterFonts(text, fontId, customFontCss || undefined).then((changed) => {
       if (alive && changed) setTick((t) => t + 1);
     });
     return () => {
       alive = false;
     };
-  }, [text]);
+  }, [text, fontId, customFontCss]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
