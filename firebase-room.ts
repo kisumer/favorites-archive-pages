@@ -24,6 +24,7 @@ export interface RoomRecord {
   categoryOrder: string[];
   categories: Record<string, Category>;
   images: Record<string, string>;
+  createdAt: number;
   updatedAt: number;
 }
 
@@ -185,7 +186,7 @@ function normalizeCategory(raw: unknown, id: string, index: number): Category {
 
 export function roomRecordToYearData(
   raw: unknown,
-): { yearData: YearData; images: Record<string, string>; updatedAt: number } | null {
+): { yearData: YearData; images: Record<string, string>; createdAt: number; updatedAt: number } | null {
   const r = asRecord(raw);
   if (!r) return null;
   const rawYear = Number(r["year"]);
@@ -193,6 +194,8 @@ export function roomRecordToYearData(
   const title = str(r["title"], LIMITS.title);
   const rawUpdatedAt = Number(r["updatedAt"]);
   const updatedAt = Number.isFinite(rawUpdatedAt) && rawUpdatedAt > 0 ? rawUpdatedAt : Date.now();
+  const rawCreatedAt = Number(r["createdAt"]);
+  const createdAt = Number.isFinite(rawCreatedAt) && rawCreatedAt > 0 ? rawCreatedAt : updatedAt;
   const rawCats = asRecord(r["categories"]) ?? {};
   const rawOrder = Array.isArray(r["categoryOrder"])
     ? r["categoryOrder"].filter((x): x is string => typeof x === "string")
@@ -227,6 +230,7 @@ export function roomRecordToYearData(
       categories,
     },
     images,
+    createdAt,
     updatedAt,
   };
 }
@@ -320,6 +324,7 @@ export async function createRoom(
     months: emptyMonths(),
   };
 
+  const now = Date.now();
   const payload: RoomRecord = {
     version: 1,
     year: y.year,
@@ -327,7 +332,8 @@ export async function createRoom(
     categoryOrder: [firstCat.id],
     categories: { [firstCat.id]: firstCat },
     images: {},
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
   };
 
   await rtdbRequest(`${dbUrl}/rooms/${roomId}.json?print=silent`, "PUT", payload);
@@ -357,19 +363,20 @@ export function collectYearImageIds(yearData: YearData): string[] {
 export async function fetchRoomMeta(
   dbUrl: string,
   roomId: string,
-): Promise<{ yearData: YearData; updatedAt: number } | null> {
+): Promise<{ yearData: YearData; createdAt: number; updatedAt: number } | null> {
   const base = `${dbUrl}/rooms/${roomId}`;
-  const [year, title, categoryOrder, categories, updatedAt] = await Promise.all([
+  const [year, title, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
     rtdbRequest<unknown>(`${base}/year.json`, "GET"),
     rtdbRequest<unknown>(`${base}/title.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/createdAt.json`, "GET"),
     rtdbRequest<unknown>(`${base}/updatedAt.json`, "GET"),
   ]);
   if (year === null && categories === null && updatedAt === null) return null;
-  const parsed = roomRecordToYearData({ year, title, categoryOrder, categories, updatedAt });
+  const parsed = roomRecordToYearData({ year, title, categoryOrder, categories, createdAt, updatedAt });
   if (!parsed) return null;
-  return { yearData: parsed.yearData, updatedAt: parsed.updatedAt };
+  return { yearData: parsed.yearData, createdAt: parsed.createdAt, updatedAt: parsed.updatedAt };
 }
 
 export async function fetchMissingImages(
@@ -409,13 +416,14 @@ export async function fetchRoom(
   yearData: YearData;
   images: Record<string, string>;
   newlyFetchedImages: Record<string, string>;
+  createdAt: number;
   updatedAt: number;
 } | null> {
   const meta = await fetchRoomMeta(dbUrl, roomId);
   if (!meta) return null;
-  if (isRoomExpired(meta.updatedAt)) {
+  if (isRoomExpired(meta.createdAt)) {
     await deleteRoom(dbUrl, roomId).catch(() => undefined);
-    throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
+    throw new Error("방 생성 후 24시간이 지나 자동으로 삭제된 방이에요.");
   }
   const neededIds = collectYearImageIds(meta.yearData);
   const missingIds = neededIds.filter((id) => !cachedImages[id]);
@@ -425,7 +433,13 @@ export async function fetchRoom(
     const data = newlyFetchedImages[id] ?? cachedImages[id];
     if (data) images[id] = data;
   }
-  return { yearData: meta.yearData, images, newlyFetchedImages, updatedAt: meta.updatedAt };
+  return {
+    yearData: meta.yearData,
+    images,
+    newlyFetchedImages,
+    createdAt: meta.createdAt,
+    updatedAt: meta.updatedAt,
+  };
 }
 
 export async function uploadRoomImage(

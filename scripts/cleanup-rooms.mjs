@@ -81,12 +81,19 @@ async function main() {
   let deleted = 0;
 
   for (const roomId of roomIds) {
-    const tsRes = await fetch(
-      `${DB_URL}/rooms/${encodeURIComponent(roomId)}/updatedAt.json?${authQuery}`,
-    );
-    if (!tsRes.ok) continue;
-    const updatedAt = Number(await tsRes.json());
-    if (!Number.isFinite(updatedAt) || now - updatedAt >= TTL_MS) {
+    const [createdRes, updatedRes] = await Promise.all([
+      fetch(`${DB_URL}/rooms/${encodeURIComponent(roomId)}/createdAt.json?${authQuery}`),
+      fetch(`${DB_URL}/rooms/${encodeURIComponent(roomId)}/updatedAt.json?${authQuery}`),
+    ]);
+    const createdAt = createdRes.ok ? Number(await createdRes.json()) : NaN;
+    const updatedAt = updatedRes.ok ? Number(await updatedRes.json()) : NaN;
+    const baseTime =
+      Number.isFinite(createdAt) && createdAt > 0
+        ? createdAt
+        : Number.isFinite(updatedAt) && updatedAt > 0
+          ? updatedAt
+          : NaN;
+    if (!Number.isFinite(baseTime) || now - baseTime >= TTL_MS) {
       const delRes = await fetch(`${DB_URL}/rooms/${encodeURIComponent(roomId)}.json?${authQuery}`, {
         method: "DELETE",
       });

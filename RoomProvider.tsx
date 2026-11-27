@@ -11,6 +11,11 @@ import {
 } from "@/lib/archive/firebase-room";
 import { compressImage, type PhotoCrop } from "@/lib/archive/image";
 import { uid } from "@/lib/archive/model";
+import {
+  deleteCachedRoomImages,
+  loadCachedRoomImages,
+  saveCachedRoomImages,
+} from "@/lib/archive/room-image-cache";
 import type { ArchiveState, Result, YearData } from "@/lib/archive/types";
 import { ArchiveContext, type SaveStatus, type Updater } from "./ArchiveProvider";
 
@@ -20,6 +25,7 @@ interface RoomMetaContextValue {
   roomId: string;
   dbUrl: string;
   connectionStatus: RoomConnectionStatus;
+  createdAt: number;
   updatedAt: number;
   expiresAt: number;
 }
@@ -53,6 +59,7 @@ export function RoomProvider({
   const [images, setImages] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [connectionStatus, setConnectionStatus] = useState<RoomConnectionStatus>("connecting");
+  const [createdAt, setCreatedAt] = useState<number>(() => Date.now());
   const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -73,12 +80,18 @@ export function RoomProvider({
 
     (async () => {
       try {
-        const initial = await fetchRoom(dbUrl, roomId);
+        const cachedImages = await loadCachedRoomImages(roomId);
+        if (cancelled) return;
+        const initial = await fetchRoom(dbUrl, roomId, cachedImages);
         if (cancelled) return;
         if (!initial) {
+          void deleteCachedRoomImages(roomId);
           setLoadError("존재하지 않거나 삭제된 방이에요.");
           setConnectionStatus("error");
           return;
+        }
+        if (Object.keys(initial.newlyFetchedImages).length > 0) {
+          void saveCachedRoomImages(roomId, initial.newlyFetchedImages);
         }
         const initialState: ArchiveState = {
           version: 1,
@@ -90,6 +103,7 @@ export function RoomProvider({
         imagesRef.current = initial.images;
         setState(initialState);
         setImages(initial.images);
+        setCreatedAt(initial.createdAt);
         setUpdatedAt(initial.updatedAt);
         setConnectionStatus("connected");
 
@@ -110,6 +124,7 @@ export function RoomProvider({
             if (Object.keys(incoming.images).length > 0) {
               imagesRef.current = { ...imagesRef.current, ...incoming.images };
               setImages(imagesRef.current);
+              void saveCachedRoomImages(roomId, incoming.images);
             }
             // Preserve local pending/in-flight edits so slow mobile networks don't overwrite them
             if (syncTimerRef.current !== null || inFlightRef.current > 0) return;
@@ -229,6 +244,7 @@ export function RoomProvider({
       const id = uid();
       imagesRef.current = { ...imagesRef.current, [id]: data };
       setImages(imagesRef.current);
+      void saveCachedRoomImages(roomId, { [id]: data });
       inFlightRef.current += 1;
       setSaveStatus("saving");
       try {
@@ -261,7 +277,7 @@ export function RoomProvider({
 
   return (
     <RoomMetaContext.Provider
-      value={{ roomId, dbUrl, connectionStatus, updatedAt, expiresAt: updatedAt + ROOM_TTL_MS }}
+      value={{ roomId, dbUrl, connectionStatus, createdAt, updatedAt, expiresAt: createdAt + ROOM_TTL_MS }}
     >
       <ArchiveContext.Provider
         value={{

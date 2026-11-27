@@ -111,12 +111,29 @@ function getInviteUrl(roomId: string): string {
   return url.toString();
 }
 
+function formatRemaining(expiresAt: number, now: number): string {
+  const diff = Math.max(0, expiresAt - now);
+  const totalMin = Math.ceil(diff / 60_000);
+  if (totalMin <= 0) return "곧 자동 삭제됨";
+  const hours = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  if (hours <= 0) return `약 ${mins}분 남음`;
+  return mins > 0 ? `약 ${hours}시간 ${mins}분 남음` : `약 ${hours}시간 남음`;
+}
+
 function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => void }) {
   const { state, apply } = useArchive();
+  const { expiresAt } = useRoomMeta();
   const current = getYear(state) ?? state.years[0]!;
   const [copied, setCopied] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const [yearDraft, setYearDraft] = useState(String(current.year));
   const ids = { title: useId(), year: useId() };
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     setYearDraft(String(current.year));
@@ -166,6 +183,9 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
         <p className="text-[13px] font-bold">친구 초대하기</p>
         <p className="mt-0.5 text-[12px] font-medium text-muted-foreground">
           링크만 있으면 로그인 없이 바로 들어와 자기 칸을 채울 수 있어요.
+        </p>
+        <p className="mt-1 text-[11px] font-bold text-muted-foreground">
+          방 생성 후 24시간 뒤 자동 삭제 · {formatRemaining(expiresAt, now)}
         </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           <Button variant="pop" size="sm" className="flex-1" onClick={copyInvite}>
