@@ -234,17 +234,18 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
         const rect = starWrap.getBoundingClientRect();
         const w = rect.width;
         const h = rect.height;
+        const scale = Math.min(w, h) / 228;
         ctx.clearRect(0, 0, w, h);
 
         rot += 0.008 + spinBoost;
         spinBoost *= 0.93;
-        const floatY = Math.sin(t * 1.8) * 6;
+        const floatY = Math.sin(t * 1.8) * 6 * scale;
 
         ctx.save();
-        ctx.translate(w / 2, h / 2 + floatY - 4);
+        ctx.translate(w / 2, h / 2 + floatY - 4 * scale);
         ctx.rotate(rot);
 
-        const grad = ctx.createRadialGradient(-22, -26, 8, 0, 0, 82);
+        const grad = ctx.createRadialGradient(-22 * scale, -26 * scale, 8 * scale, 0, 0, 82 * scale);
         grad.addColorStop(0, "#FFE44D");
         grad.addColorStop(0.45, "#FFD000");
         grad.addColorStop(1, "#E09F00");
@@ -253,7 +254,7 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
         const pts = 8;
         for (let i = 0; i < pts * 2; i++) {
           const a = (i / (pts * 2)) * Math.PI * 2;
-          const r = i % 2 === 0 ? 74 : 42;
+          const r = (i % 2 === 0 ? 74 : 42) * scale;
           const x = Math.cos(a) * r;
           const y = Math.sin(a) * r;
           if (i === 0) ctx.moveTo(x, y);
@@ -264,15 +265,19 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
         ctx.fill();
         ctx.restore();
 
-        const shadowScale = 1 - floatY * 0.015;
+        const shadowScale = 1 - (floatY / Math.max(scale, 0.5)) * 0.015;
         contactShadow.style.transform = `translateX(-50%) scale(${shadowScale.toFixed(3)})`;
         rafId = window.requestAnimationFrame(loop2D);
       };
       rafId = window.requestAnimationFrame(loop2D);
 
+      const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize2D) : null;
+      ro?.observe(starWrap);
+
       cleanupInner = () => {
         starWrap.removeEventListener("click", handleClick);
         window.removeEventListener("resize", resize2D);
+        ro?.disconnect();
       };
     };
 
@@ -349,6 +354,8 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
           camera.aspect = width / height;
           camera.updateProjectionMatrix();
         };
+        const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resizeRenderer) : null;
+        ro?.observe(starWrap);
         window.addEventListener("resize", resizeRenderer);
         resizeRenderer();
 
@@ -484,6 +491,7 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
         animate();
 
         cleanupInner = () => {
+          ro?.disconnect();
           window.removeEventListener("resize", resizeRenderer);
           starWrap.removeEventListener("pointerdown", onPointerDown);
           starWrap.removeEventListener("pointermove", onPointerMove);
@@ -521,7 +529,7 @@ export function Star3DStage({ onSpin }: { onSpin: () => void }) {
       role="button"
       tabIndex={0}
       aria-label="3D 노란 별 — 드래그해서 회전하거나 탭해서 360도 스핀"
-      className="relative flex h-[228px] w-[228px] cursor-grab touch-none items-center justify-center active:cursor-grabbing focus:outline-none"
+      className="relative flex h-[228px] w-[228px] cursor-grab touch-none items-center justify-center sm:h-[260px] sm:w-[260px] lg:h-[360px] lg:w-[360px] xl:h-[400px] xl:w-[400px] active:cursor-grabbing focus:outline-none"
     >
       <canvas ref={canvasRef} className="block h-full w-full" />
       <div ref={shadowRef} className="landing-contact-shadow" />
