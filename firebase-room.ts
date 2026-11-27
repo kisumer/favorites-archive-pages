@@ -315,19 +315,77 @@ export async function deleteRoom(dbUrl: string, roomId: string): Promise<void> {
   await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "DELETE");
 }
 
+export function collectYearImageIds(yearData: YearData): string[] {
+  const ids = new Set<string>();
+  for (const c of yearData.categories) {
+    if (c.coverImageId) ids.add(c.coverImageId);
+    for (const p of c.months) {
+      if (p.imageId) ids.add(p.imageId);
+    }
+  }
+  return [...ids];
+}
+
+export async function fetchRoomMeta(
+  dbUrl: string,
+  roomId: string,
+): Promise<{ yearData: YearData; updatedAt: number } | null> {
+  const base = `${dbUrl}/rooms/${roomId}`;
+  const [year, title, categoryOrder, categories, updatedAt] = await Promise.all([
+    rtdbRequest<unknown>(`${base}/year.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/title.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/updatedAt.json`, "GET"),
+  ]);
+  if (year === null && categories === null && updatedAt === null) return null;
+  const parsed = roomRecordToYearData({ year, title, categoryOrder, categories, updatedAt });
+  if (!parsed) return null;
+  return { yearData: parsed.yearData, updatedAt: parsed.updatedAt };
+}
+
+export async function fetchMissingImages(
+  dbUrl: string,
+  roomId: string,
+  ids: string[],
+): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const entries = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const data = await rtdbRequest<unknown>(
+          `${dbUrl}/rooms/${roomId}/images/${encodeURIComponent(id)}.json`,
+          "GET",
+        );
+        if (typeof data === "string" && data.startsWith("data:image/")) {
+          return [id, data] as const;
+        }
+      } catch {
+        // skip failed individual image
+      }
+      return null;
+    }),
+  );
+  const out: Record<string, string> = {};
+  for (const e of entries) {
+    if (e) out[e[0]] = e[1];
+  }
+  return out;
+}
+
 export async function fetchRoom(
   dbUrl: string,
   roomId: string,
 ): Promise<{ yearData: YearData; images: Record<string, string>; updatedAt: number } | null> {
-  const raw = await rtdbRequest<unknown>(`${dbUrl}/rooms/${roomId}.json`, "GET");
-  if (!raw) return null;
-  const parsed = roomRecordToYearData(raw);
-  if (!parsed) return null;
-  if (isRoomExpired(parsed.updatedAt)) {
+  const meta = await fetchRoomMeta(dbUrl, roomId);
+  if (!meta) return null;
+  if (isRoomExpired(meta.updatedAt)) {
     await deleteRoom(dbUrl, roomId).catch(() => undefined);
     throw new Error("마지막 수정 후 24시간이 지나 자동으로 삭제된 방이에요.");
   }
-  return parsed;
+  const neededIds = collectYearImageIds(meta.yearData);
+  const images = await fetchMissingImages(dbUrl, roomId, neededIds);
+  return { yearData: meta.yearData, images, updatedAt: meta.updatedAt };
 }
 
 export async function uploadRoomImage(
@@ -503,66 +561,100 @@ export function applyRtdbEvent(
 export function subscribeRoom(
   dbUrl: string,
   roomId: string,
+  initialUpdatedAt: number,
+  getKnownImageIds: () => Set<string>,
   onData: (parsed: { yearData: YearData; images: Record<string, string>; updatedAt: number }) => void,
   onStatus: (status: "connected" | "reconnecting" | "error") => void,
 ): () => void {
-  let rawRoom: Record<string, unknown> = {};
+  let lastSeenUpdatedAt = initialUpdatedAt;
   let closed = false;
+  let fetching = false;
+  let pendingRefresh = false;
   let es: EventSource | null = null;
   let pollTimer: number | null = null;
 
-  const emit = () => {
-    const parsed = roomRecordToYearData(rawRoom);
-    if (parsed) onData(parsed);
+  const stopPolling = () => {
+    if (pollTimer !== null) {
+      window.clearInterval(pollTimer);
+      pollTimer = null;
+    }
   };
 
-  const handleEvent = (type: "put" | "patch", rawData: string) => {
+  const refreshFromServer = async () => {
+    if (closed) return;
+    if (fetching) {
+      pendingRefresh = true;
+      return;
+    }
+    fetching = true;
     try {
-      const payload = JSON.parse(rawData) as { path?: string; data?: unknown };
-      if (typeof payload.path !== "string") return;
-      if (type === "put" && payload.path === "/" && payload.data === null) {
+      const meta = await fetchRoomMeta(dbUrl, roomId);
+      if (closed) return;
+      if (!meta) {
         onStatus("error");
         return;
       }
-      if (type === "patch" && payload.data && typeof payload.data === "object") {
-        // For patch, apply each key
-        const prefix = payload.path === "/" ? "" : payload.path;
-        for (const [k, v] of Object.entries(payload.data as Record<string, unknown>)) {
-          rawRoom = applyRtdbEvent(rawRoom, `${prefix}/${k}`, v);
-        }
-      } else {
-        rawRoom = applyRtdbEvent(rawRoom, payload.path, payload.data);
-      }
+      lastSeenUpdatedAt = Math.max(lastSeenUpdatedAt, meta.updatedAt);
+      const known = getKnownImageIds();
+      const missingIds = collectYearImageIds(meta.yearData).filter((id) => !known.has(id));
+      const newImages = await fetchMissingImages(dbUrl, roomId, missingIds);
+      if (closed) return;
       onStatus("connected");
-      emit();
+      onData({ yearData: meta.yearData, images: newImages, updatedAt: meta.updatedAt });
     } catch {
-      // ignore malformed event
+      if (!closed) onStatus("reconnecting");
+    } finally {
+      fetching = false;
+      if (pendingRefresh && !closed) {
+        pendingRefresh = false;
+        void refreshFromServer();
+      }
+    }
+  };
+
+  const handleTimestamp = (rawTs: unknown) => {
+    if (rawTs === null) {
+      onStatus("error");
+      return;
+    }
+    const ts = Number(rawTs);
+    if (!Number.isFinite(ts) || ts <= 0) return;
+    onStatus("connected");
+    if (ts > lastSeenUpdatedAt) {
+      lastSeenUpdatedAt = ts;
+      void refreshFromServer();
     }
   };
 
   const startPollingFallback = () => {
     if (pollTimer !== null || closed) return;
     pollTimer = window.setInterval(() => {
-      if (closed) return;
-      void rtdbRequest<Record<string, unknown> | null>(`${dbUrl}/rooms/${roomId}.json`, "GET")
+      if (closed || document.visibilityState === "hidden") return;
+      void rtdbRequest<unknown>(`${dbUrl}/rooms/${roomId}/updatedAt.json`, "GET")
         .then((res) => {
-          if (closed || !res) return;
-          rawRoom = res;
-          onStatus("connected");
-          emit();
+          if (!closed) handleTimestamp(res);
         })
         .catch(() => {
           if (!closed) onStatus("reconnecting");
         });
-    }, 4000);
+    }, 12_000);
   };
 
   if (typeof EventSource !== "undefined") {
-    es = new EventSource(`${dbUrl}/rooms/${roomId}.json`);
-    es.addEventListener("put", (e) => handleEvent("put", (e as MessageEvent<string>).data));
-    es.addEventListener("patch", (e) => handleEvent("patch", (e as MessageEvent<string>).data));
+    // Subscribe ONLY to the 13-byte updatedAt timestamp — never re-download images on reconnect.
+    es = new EventSource(`${dbUrl}/rooms/${roomId}/updatedAt.json`);
+    es.addEventListener("put", (e) => {
+      try {
+        const payload = JSON.parse((e as MessageEvent<string>).data) as { data?: unknown };
+        handleTimestamp(payload.data);
+      } catch {
+        // ignore malformed event
+      }
+    });
     es.onopen = () => {
-      if (!closed) onStatus("connected");
+      if (closed) return;
+      stopPolling();
+      onStatus("connected");
     };
     es.onerror = () => {
       if (closed) return;
@@ -576,6 +668,6 @@ export function subscribeRoom(
   return () => {
     closed = true;
     es?.close();
-    if (pollTimer !== null) window.clearInterval(pollTimer);
+    stopPolling();
   };
 }

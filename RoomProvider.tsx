@@ -57,6 +57,7 @@ export function RoomProvider({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const stateRef = useRef<ArchiveState | null>(null);
+  const imagesRef = useRef<Record<string, string>>({});
   const pendingPrevYearRef = useRef<YearData | null>(null);
   const syncTimerRef = useRef<number | null>(null);
   const inFlightRef = useRef(0);
@@ -86,6 +87,7 @@ export function RoomProvider({
           years: [initial.yearData],
         };
         stateRef.current = initialState;
+        imagesRef.current = initial.images;
         setState(initialState);
         setImages(initial.images);
         setUpdatedAt(initial.updatedAt);
@@ -101,9 +103,14 @@ export function RoomProvider({
         unsubscribe = subscribeRoom(
           dbUrl,
           roomId,
+          initial.updatedAt,
+          () => new Set(Object.keys(imagesRef.current)),
           (incoming) => {
             if (cancelled) return;
-            setImages((prevImgs) => ({ ...prevImgs, ...incoming.images }));
+            if (Object.keys(incoming.images).length > 0) {
+              imagesRef.current = { ...imagesRef.current, ...incoming.images };
+              setImages(imagesRef.current);
+            }
             // Preserve local pending/in-flight edits so slow mobile networks don't overwrite them
             if (syncTimerRef.current !== null || inFlightRef.current > 0) return;
             const nextState: ArchiveState = {
@@ -214,13 +221,14 @@ export function RoomProvider({
     async (file: File, crop: PhotoCrop) => {
       let data: string;
       try {
-        data = await compressImage(file, crop, { maxSize: 512, quality: 0.78 });
+        data = await compressImage(file, crop, { maxSize: 400, quality: 0.72 });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "사진을 처리하지 못했어요.");
         return null;
       }
       const id = uid();
-      setImages((prev) => ({ ...prev, [id]: data }));
+      imagesRef.current = { ...imagesRef.current, [id]: data };
+      setImages(imagesRef.current);
       inFlightRef.current += 1;
       setSaveStatus("saving");
       try {
