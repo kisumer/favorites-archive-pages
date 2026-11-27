@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { addYear, deleteYear, LIMITS, parseYearInput, setCurrentYear, updateYearMeta } from "@/lib/archive/model";
 import { cn } from "@/lib/utils";
 import { useArchive } from "./ArchiveProvider";
+import { BackgroundPicker } from "./BackgroundPicker";
 import { useConfirm } from "./ConfirmProvider";
 import { FieldLabel, inputClass, Panel } from "./Panel";
 
@@ -157,7 +158,11 @@ export function YearPanel() {
               className={cn(inputClass, "h-11")}
             />
           </div>
-
+          <BackgroundPicker
+            bgColor={current.bgColor}
+            bgPattern={current.bgPattern}
+            onChange={(patch) => apply((s) => updateYearMeta(s, current.year, patch))}
+          />
         </div>
       ) : null}
 

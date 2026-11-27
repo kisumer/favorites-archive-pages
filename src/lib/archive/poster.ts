@@ -4,8 +4,8 @@
  */
 import { FONT_POSTER_TITLE, FONT_SANS, FONT_SERIF, getPosterFont } from "./fonts";
 import { monthLabel } from "./model";
-import { RAINBOW, isDarkColor, tint } from "./palette";
-import type { Category, MonthPick, PosterFontId, ThemeId, YearData } from "./types";
+import { DEFAULT_POSTER_BG, RAINBOW, isDarkColor, isHexColor, tint } from "./palette";
+import type { Category, MonthPick, PosterBgPattern, PosterFontId, ThemeId, YearData } from "./types";
 
 export const POSTER_W = 1400;
 const PAD_X = 72;
@@ -427,8 +427,51 @@ function centeredInk(ctx: Ctx, text: string) {
 }
 
 
-function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
+function isNearWhite(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m || !m[1]) return true;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return r >= 244 && g >= 244 && b >= 244;
+}
+
+function drawPosterBackground(
+  ctx: Ctx,
+  width: number,
+  height: number,
+  bgColor: string,
+  pattern: PosterBgPattern,
+) {
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, width, height);
+  if (pattern !== "dots") return;
+
+  const darkBg = isDarkColor(bgColor);
+  ctx.save();
+  ctx.fillStyle = darkBg
+    ? "rgba(255, 255, 255, 0.16)"
+    : isNearWhite(bgColor)
+      ? "rgba(27, 26, 34, 0.09)"
+      : "rgba(255, 255, 255, 0.65)";
+  const step = 44;
+  const radius = 5.5;
+  for (let row = 0, y = step / 2; y < height + step; row++, y += step) {
+    const offsetX = row % 2 === 1 ? step / 2 : 0;
+    for (let x = offsetX; x < width + step; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId, darkBg: boolean) {
   const st = STYLES[theme];
+  const fgInk = darkBg ? "#FAFAFA" : st.ink;
+  const fgMuted = darkBg ? "#C8C6D2" : st.muted;
   const f = resolveFont(theme, year.font, year.customFontCss);
   const cx = POSTER_W / 2;
   ctx.textAlign = "center";
@@ -441,7 +484,7 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     // highlighter swipe behind title
     ctx.save();
     ctx.fillStyle = "#FFB3D1";
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = darkBg ? 0.45 : 0.55;
     roundRectPath(
       ctx,
       { x: cx - tw / 2 - 14, y: L.titleY + L.titleSize * 0.21, w: tw + 28, h: L.titleSize * 0.36 },
@@ -449,26 +492,26 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId) {
     );
     ctx.fill();
     ctx.restore();
-    ctx.fillStyle = st.ink;
+    ctx.fillStyle = fgInk;
     ctx.fillText(L.title, cx + titleInk.offsetX, L.titleY + titleInk.offsetY);
     ctx.restore();
   } else {
-    ctx.strokeStyle = st.ink;
+    ctx.strokeStyle = fgInk;
     solid(ctx, 1.5);
     ctx.beginPath();
     ctx.moveTo(PAD_X, L.kickerY + 4);
     ctx.lineTo(POSTER_W - PAD_X, L.kickerY + 4);
     ctx.stroke();
     setPosterFont(ctx, 700, 14, f.body);
-    ctx.fillStyle = st.muted;
+    ctx.fillStyle = fgMuted;
     ctx.fillText(`THE FAVORITES ARCHIVE  —  VOL. ${year.year}`, cx, L.kickerY + 30);
     setTitleFont(ctx, L.titleSize, theme, year.font, year.customFontCss);
-    ctx.fillStyle = st.ink;
+    ctx.fillStyle = fgInk;
     ctx.fillText(L.title, cx, L.titleY);
   }
   if (L.authorLines.length) {
     setPosterFont(ctx, 600, 20, f.body);
-    ctx.fillStyle = st.muted;
+    ctx.fillStyle = fgMuted;
     L.authorLines.forEach((line, i) => ctx.fillText(line, cx, L.authorY + i * 26));
   }
 }
@@ -481,6 +524,7 @@ function drawCover(
   getImage: ImageGetter,
   fontId?: PosterFontId,
   customFontCss?: string,
+  darkBg = false,
 ) {
   const st = STYLES[theme];
   const f = resolveFont(theme, fontId, customFontCss);
@@ -535,7 +579,7 @@ function drawCover(
     const ink = centeredInk(ctx, CL.nameText);
     ctx.fillText(CL.nameText, x + w / 2 + ink.offsetX, y + h / 2 + ink.offsetY);
   } else {
-    ctx.fillStyle = st.ink;
+    ctx.fillStyle = darkBg ? "#FAFAFA" : st.ink;
     ctx.textAlign = "left";
     setPosterFont(ctx, f.titleWeight, CL.nameSize, f.display);
     ctx.fillText(CL.nameText, CL.name.x, CL.name.y + CL.name.h / 2);
@@ -560,13 +604,13 @@ function drawCover(
         ctx.fillText(line, b.x + b.w / 2, b.y + 14 + 13 + i * 26);
       });
     } else {
-      ctx.strokeStyle = st.ink;
+      ctx.strokeStyle = darkBg ? "#FAFAFA" : st.ink;
       solid(ctx, 2);
       ctx.beginPath();
       ctx.moveTo(b.x + 1, b.y + 8);
       ctx.lineTo(b.x + 1, b.y + b.h - 8);
       ctx.stroke();
-      ctx.fillStyle = st.muted;
+      ctx.fillStyle = darkBg ? "#C8C6D2" : st.muted;
       ctx.textAlign = "left";
       setPosterFont(ctx, 500, 16, f.body);
       CL.quoteLines.forEach((line, i) => {
@@ -586,6 +630,7 @@ function drawCell(
   getImage: ImageGetter,
   fontId?: PosterFontId,
   customFontCss?: string,
+  darkBg = false,
 ) {
   const st = STYLES[theme];
   const f = resolveFont(theme, fontId, customFontCss);
@@ -695,7 +740,7 @@ function drawCell(
 
   if (pick.caption.trim()) {
     setPosterFont(ctx, 600, 13, f.body);
-    ctx.fillStyle = st.muted;
+    ctx.fillStyle = darkBg ? "#C8C6D2" : st.muted;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(ellipsize(ctx, pick.caption.trim(), CELL + 10), r.x + r.w / 2, r.y + r.h + 40);
@@ -710,16 +755,21 @@ export function drawPoster(
   getImage: ImageGetter,
 ) {
   const st = STYLES[theme];
-  ctx.fillStyle = "#fbfbfb";
-  ctx.fillRect(0, 0, L.width, L.height);
-  drawHeader(ctx, L, year, theme);
+  const bgColor = year.bgColor && isHexColor(year.bgColor) ? year.bgColor : DEFAULT_POSTER_BG;
+  const bgPattern: PosterBgPattern = year.bgPattern === "dots" ? "dots" : "solid";
+  const darkBg = isDarkColor(bgColor);
+  const fgInk = darkBg ? "#FAFAFA" : st.ink;
+  const fgMuted = darkBg ? "#C8C6D2" : st.muted;
+
+  drawPosterBackground(ctx, L.width, L.height, bgColor, bgPattern);
+  drawHeader(ctx, L, year, theme, darkBg);
 
   L.categories.forEach((CL, i) => {
     const c = year.categories.find((cc) => cc.id === CL.id);
     if (!c) return;
     if (i > 0) {
       const dy = CL.top - ROW_SPACING / 2;
-      ctx.strokeStyle = st.ink;
+      ctx.strokeStyle = fgInk;
       ctx.globalAlpha = theme === "kitsch" ? 0.3 : 0.2;
       if (theme === "kitsch") dotted(ctx, 3);
       else solid(ctx, 1);
@@ -730,24 +780,24 @@ export function drawPoster(
       ctx.globalAlpha = 1;
       ctx.setLineDash([]);
     }
-    drawCover(ctx, c, CL, theme, getImage, year.font, year.customFontCss);
+    drawCover(ctx, c, CL, theme, getImage, year.font, year.customFontCss, darkBg);
     for (const cell of CL.cells) {
       const pick = c.months[cell.month];
-      if (pick) drawCell(ctx, c, pick, cell, theme, getImage, year.font, year.customFontCss);
+      if (pick) drawCell(ctx, c, pick, cell, theme, getImage, year.font, year.customFontCss, darkBg);
     }
   });
 
   if (L.emptyY != null) {
     const r: Rect = { x: PAD_X, y: L.emptyY, w: POSTER_W - PAD_X * 2, h: 240 };
     roundRectPath(ctx, r, theme === "kitsch" ? 28 : 4);
-    ctx.strokeStyle = st.ink;
+    ctx.strokeStyle = fgInk;
     ctx.globalAlpha = 0.4;
     solid(ctx, 2.5);
     ctx.setLineDash([10, 8]);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = st.muted;
+    ctx.fillStyle = fgMuted;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     setPosterFont(ctx, 800, 26);
@@ -757,7 +807,7 @@ export function drawPoster(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   setPosterFont(ctx, 700, 15);
-  ctx.fillStyle = st.muted;
+  ctx.fillStyle = fgMuted;
   ctx.fillText("@mieryint", POSTER_W / 2, L.footerY);
 }
 

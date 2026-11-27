@@ -1,6 +1,7 @@
 export type ThemeId = "kitsch" | "editorial";
 export type BadgeMode = "rainbow" | "category";
 export type PosterFontId = "default" | "serif" | "sans" | "pixel" | "custom";
+export type PosterBgPattern = "solid" | "dots";
 
 export interface MonthPick {
   name: string;
@@ -26,6 +27,8 @@ export interface YearData {
   coauthors?: string[];
   font?: PosterFontId;
   customFontCss?: string;
+  bgColor?: string;
+  bgPattern?: PosterBgPattern;
   categories: Category[];
 }
 

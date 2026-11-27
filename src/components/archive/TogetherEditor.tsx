@@ -24,6 +24,7 @@ import { getYear, LIMITS, parseYearInput } from "@/lib/archive/model";
 import { cn } from "@/lib/utils";
 import { useArchive } from "./ArchiveProvider";
 import { CategoryPanel } from "./CategoryPanel";
+import { BackgroundPicker } from "./BackgroundPicker";
 import { ConfirmProvider } from "./ConfirmProvider";
 import { ExportDialog } from "./ExportDialog";
 import { Wordmark } from "./Logo";
@@ -234,7 +235,16 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
           />
         </div>
       </div>
-
+      <BackgroundPicker
+        bgColor={current.bgColor}
+        bgPattern={current.bgPattern}
+        onChange={(patch) =>
+          apply((s) => ({
+            ...s,
+            years: s.years.map((y, idx) => (idx === 0 ? { ...y, ...patch } : y)),
+          }))
+        }
+      />
     </Panel>
   );
 }

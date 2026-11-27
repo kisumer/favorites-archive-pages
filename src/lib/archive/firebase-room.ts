@@ -1,7 +1,7 @@
 import { MAX_CUSTOM_FONT_CSS, normalizePosterFont, sanitizeCustomFontCss } from "./fonts";
-import { CATEGORY_COLORS, isHexColor } from "./palette";
+import { CATEGORY_COLORS, DEFAULT_POSTER_BG, isHexColor } from "./palette";
 import { createDefaultState, emptyMonths, isValidYear, LIMITS, MONTH_COUNT, uid } from "./model";
-import type { BadgeMode, Category, MonthPick, PosterFontId, YearData } from "./types";
+import type { BadgeMode, Category, MonthPick, PosterBgPattern, PosterFontId, YearData } from "./types";
 
 const DB_URL_STORAGE_KEY = "choiae:together:dbUrl";
 const RECENT_ROOMS_KEY = "choiae:together:recentRooms";
@@ -24,6 +24,8 @@ export interface RoomRecord {
   title: string;
   font?: PosterFontId;
   customFontCss?: string;
+  bgColor?: string;
+  bgPattern?: PosterBgPattern;
   categoryOrder: string[];
   categories: Record<string, Category>;
   images: Record<string, string>;
@@ -230,6 +232,8 @@ export function roomRecordToYearData(
     typeof r["customFontCss"] === "string"
       ? sanitizeCustomFontCss(r["customFontCss"].slice(0, MAX_CUSTOM_FONT_CSS))
       : "";
+  const bgColor = isHexColor(r["bgColor"]) ? r["bgColor"].toUpperCase() : undefined;
+  const bgPattern: PosterBgPattern | undefined = r["bgPattern"] === "dots" ? "dots" : undefined;
 
   return {
     yearData: {
@@ -238,6 +242,8 @@ export function roomRecordToYearData(
       author: "",
       ...(font && font !== "default" ? { font } : {}),
       ...(customFontCss ? { customFontCss } : {}),
+      ...(bgColor ? { bgColor } : {}),
+      ...(bgPattern ? { bgPattern } : {}),
       categories,
     },
     images,
@@ -376,11 +382,13 @@ export async function fetchRoomMeta(
   roomId: string,
 ): Promise<{ yearData: YearData; createdAt: number; updatedAt: number } | null> {
   const base = `${dbUrl}/rooms/${roomId}`;
-  const [year, title, font, customFontCss, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
+  const [year, title, font, customFontCss, bgColor, bgPattern, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
     rtdbRequest<unknown>(`${base}/year.json`, "GET"),
     rtdbRequest<unknown>(`${base}/title.json`, "GET"),
     rtdbRequest<unknown>(`${base}/font.json`, "GET"),
     rtdbRequest<unknown>(`${base}/customFontCss.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/bgColor.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/bgPattern.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
     rtdbRequest<unknown>(`${base}/createdAt.json`, "GET"),
@@ -392,6 +400,8 @@ export async function fetchRoomMeta(
     title,
     font,
     customFontCss,
+    bgColor,
+    bgPattern,
     categoryOrder,
     categories,
     createdAt,
@@ -534,6 +544,14 @@ export async function syncYearDiff(
   }
   if ((prev.customFontCss ?? "") !== (next.customFontCss ?? "")) {
     rootPatch["customFontCss"] = next.customFontCss ?? null;
+    hasRootPatch = true;
+  }
+  if ((prev.bgColor ?? DEFAULT_POSTER_BG) !== (next.bgColor ?? DEFAULT_POSTER_BG)) {
+    rootPatch["bgColor"] = next.bgColor ?? DEFAULT_POSTER_BG;
+    hasRootPatch = true;
+  }
+  if ((prev.bgPattern ?? "solid") !== (next.bgPattern ?? "solid")) {
+    rootPatch["bgPattern"] = next.bgPattern ?? "solid";
     hasRootPatch = true;
   }
 

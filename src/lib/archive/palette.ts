@@ -21,6 +21,17 @@ export const STICKER_COLORS: Swatch[] = [
   { hex: "#1B1A22", label: "블랙" },
 ];
 
+export const DEFAULT_POSTER_BG = "#FBFBFB";
+
+export const POSTER_BG_COLORS: Swatch[] = [
+  { hex: "#FBFBFB", label: "화이트" },
+  { hex: "#FFF9E6", label: "크림" },
+  { hex: "#FFEAF2", label: "연핑크" },
+  { hex: "#EAF4FF", label: "연하늘" },
+  { hex: "#F1EBFF", label: "연보라" },
+  { hex: "#1B1A22", label: "블랙" },
+];
+
 /** One colour per month for the rainbow month badges. */
 export const RAINBOW: string[] = [
   "#FFB3D1",
