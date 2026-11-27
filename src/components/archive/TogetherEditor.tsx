@@ -239,6 +239,7 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
         bgColor={current.bgColor}
         bgPattern={current.bgPattern}
         bgDotColor={current.bgDotColor}
+        titleHighlightColor={current.titleHighlightColor}
         onChange={(patch) =>
           apply((s) => ({
             ...s,

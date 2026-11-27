@@ -1,8 +1,10 @@
-import { Check, Palette, Plus } from "lucide-react";
+import { Check, Highlighter, Palette, Plus } from "lucide-react";
 import { useId, type ReactNode } from "react";
 
 import {
+  DEFAULT_HIGHLIGHT_COLOR,
   DEFAULT_POSTER_BG,
+  HIGHLIGHT_COLORS,
   isDarkColor,
   POSTER_BG_COLORS,
   POSTER_DOT_COLORS,
@@ -15,6 +17,7 @@ export interface BackgroundPatch {
   bgColor?: string;
   bgPattern?: PosterBgPattern;
   bgDotColor?: string | undefined;
+  titleHighlightColor?: string | undefined;
 }
 
 function DotsIcon() {
@@ -113,18 +116,26 @@ export function BackgroundPicker({
   bgColor,
   bgPattern,
   bgDotColor,
+  titleHighlightColor,
   onChange,
 }: {
   bgColor?: string | undefined;
   bgPattern?: PosterBgPattern | undefined;
   bgDotColor?: string | undefined;
+  titleHighlightColor?: string | undefined;
   onChange: (patch: BackgroundPatch) => void;
 }) {
   const activeColor = (bgColor ?? DEFAULT_POSTER_BG).toUpperCase();
   const activePattern: PosterBgPattern = bgPattern === "dots" ? "dots" : "solid";
   const activeDot = bgDotColor ? bgDotColor.toUpperCase() : undefined;
+  const isHighlightNone = titleHighlightColor === "none";
+  const activeHighlight = isHighlightNone
+    ? undefined
+    : (titleHighlightColor ?? DEFAULT_HIGHLIGHT_COLOR).toUpperCase();
   const isCustomColor = !POSTER_BG_COLORS.some((c) => c.hex.toUpperCase() === activeColor);
   const isCustomDot = activeDot !== undefined && !POSTER_DOT_COLORS.some((c) => c.hex.toUpperCase() === activeDot);
+  const isCustomHighlight =
+    activeHighlight !== undefined && !HIGHLIGHT_COLORS.some((c) => c.hex.toUpperCase() === activeHighlight);
 
   return (
     <div className="mt-4">
@@ -219,6 +230,42 @@ export function BackgroundPicker({
           />
         </div>
       ) : null}
+
+      {/* Row 4: title highlighter colour */}
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 text-[13px] font-bold">
+            <Highlighter className="h-3.5 w-3.5" aria-hidden="true" />
+            제목 형광펜 색
+          </span>
+          {isCustomHighlight ? (
+            <span className="text-[11px] font-bold tabular-nums text-muted-foreground">{activeHighlight}</span>
+          ) : null}
+        </div>
+        <ColorRow
+          swatches={HIGHLIGHT_COLORS}
+          active={activeHighlight}
+          onPick={(hex) => onChange({ titleHighlightColor: hex })}
+          groupLabel="제목 형광펜 색 선택"
+          itemLabel="형광펜 색"
+          leading={
+            <button
+              type="button"
+              title="형광펜 없음"
+              aria-label="형광펜 없음"
+              aria-pressed={isHighlightNone}
+              onClick={() => onChange({ titleHighlightColor: "none" })}
+              className={cn(
+                swatchClass,
+                "bg-card text-[10px] font-black text-ink",
+                isHighlightNone && selectedRing,
+              )}
+            >
+              없음
+            </button>
+          }
+        />
+      </div>
     </div>
   );
 }

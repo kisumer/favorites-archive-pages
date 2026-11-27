@@ -164,6 +164,7 @@ export function YearPanel() {
             bgColor={current.bgColor}
             bgPattern={current.bgPattern}
             bgDotColor={current.bgDotColor}
+            titleHighlightColor={current.titleHighlightColor}
             onChange={(patch) => apply((s) => updateYearMeta(s, current.year, patch))}
           />
         </div>
