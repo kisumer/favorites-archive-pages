@@ -97,7 +97,16 @@ async function main() {
     }
   }
 
-  console.log(`Cleanup complete. Checked ${roomIds.length} room(s), deleted ${deleted} expired room(s).`);
+  const remaining = Math.max(0, roomIds.length - deleted);
+  await fetch(`${DB_URL}/total.json?print=silent&${authQuery}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(remaining),
+  });
+
+  console.log(
+    `Cleanup complete. Checked ${roomIds.length} room(s), deleted ${deleted} expired room(s), remaining ${remaining}.`,
+  );
 }
 
 main().catch((err) => {

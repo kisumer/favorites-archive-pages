@@ -273,8 +273,34 @@ async function rtdbRequest<T = unknown>(
     }
     throw new Error(`서버 요청 실패 (${res.status})${text ? `: ${text.slice(0, 80)}` : ""}`);
   }
-  if (method === "DELETE") return undefined as T;
+  if (method === "DELETE" || res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+async function adjustTotalRooms(dbUrl: string, delta: number): Promise<void> {
+  const url = `${dbUrl}/total.json`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const getRes = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      headers: { "X-Firebase-ETag": "true" },
+    });
+    if (!getRes.ok) return;
+    const etag = getRes.headers.get("ETag");
+    const raw = (await getRes.json()) as unknown;
+    const current = typeof raw === "number" && Number.isFinite(raw) ? raw : Number(raw) || 0;
+    const next = Math.max(0, current + delta);
+    const putHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (etag) putHeaders["if-match"] = etag;
+    const putRes = await fetch(`${url}?print=silent`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: putHeaders,
+      body: JSON.stringify(next),
+    });
+    if (putRes.ok) return;
+    if (putRes.status !== 412) return;
+  }
 }
 
 export async function createRoom(
@@ -304,9 +330,8 @@ export async function createRoom(
     updatedAt: Date.now(),
   };
 
-  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PUT", payload);
-  // Increment cumulative room counter (best-effort; never blocks room creation)
-  void rtdbRequest(`${dbUrl}/total.json`, "PUT", { ".sv": { increment: 1 } }).catch(() => undefined);
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json?print=silent`, "PUT", payload);
+  void adjustTotalRooms(dbUrl, 1).catch(() => undefined);
   return {
     roomId,
     yearData: { year: y.year, title: "", author: "", categories: [firstCat] },
@@ -315,6 +340,7 @@ export async function createRoom(
 
 export async function deleteRoom(dbUrl: string, roomId: string): Promise<void> {
   await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "DELETE");
+  void adjustTotalRooms(dbUrl, -1).catch(() => undefined);
 }
 
 export function collectYearImageIds(yearData: YearData): string[] {
@@ -408,7 +434,7 @@ export async function uploadRoomImage(
   imageId: string,
   dataUrl: string,
 ): Promise<void> {
-  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json`, "PATCH", {
+  await rtdbRequest(`${dbUrl}/rooms/${roomId}.json?print=silent`, "PATCH", {
     [`images/${imageId}`]: dataUrl,
     updatedAt: Date.now(),
   });
