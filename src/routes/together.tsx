@@ -3,9 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TogetherApp } from "@/components/archive/TogetherEditor";
 
 export const Route = createFileRoute("/together")({
-  validateSearch: (search: Record<string, unknown>): { room?: string } => ({
-    room: typeof search["room"] === "string" && search["room"].trim() ? search["room"].trim() : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { room?: string } => {
+    const raw = search["room"];
+    return typeof raw === "string" && raw.trim() ? { room: raw.trim() } : {};
+  },
   head: () => ({
     meta: [
       { title: "함께 만들기 · 최애 아카이브" },

@@ -43,7 +43,7 @@ export function normalizeDbUrl(raw: string): string | null {
 const DEFAULT_DB_URL = "https://favorite-archive-default-rtdb.firebaseio.com";
 
 export function getEnvDbUrl(): string | null {
-  const raw = import.meta.env.VITE_FIREBASE_DB_URL as string | undefined;
+  const raw = import.meta.env["VITE_FIREBASE_DB_URL"] as string | undefined;
   return (raw ? normalizeDbUrl(raw) : null) ?? DEFAULT_DB_URL;
 }
 
@@ -226,11 +226,16 @@ async function rtdbRequest<T = unknown>(
   method: "GET" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(url, {
-    method,
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const res = await fetch(
+    url,
+    body === undefined
+      ? { method }
+      : {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+  );
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     if (res.status === 401 || res.status === 403) {
