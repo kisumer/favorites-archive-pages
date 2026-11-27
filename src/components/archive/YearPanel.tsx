@@ -73,8 +73,10 @@ export function YearPanel() {
               aria-pressed={active}
               onClick={() => apply((s) => setCurrentYear(s, y.year))}
               className={cn(
-                "h-10 shrink-0 rounded-full border-2 px-4 text-[15px] font-black tabular-nums transition-colors touch-manipulation",
-                active ? "border-ink bg-ink text-paper shadow-pop" : "border-input bg-card hover:border-ink",
+                "h-10 shrink-0 rounded-full px-4 text-[15px] font-bold tabular-nums transition-colors touch-manipulation",
+                active
+                  ? "border border-transparent bg-[var(--ink-black)] text-white"
+                  : "border border-[var(--border-soft)] bg-white text-[var(--ink-black)] hover:bg-[var(--bg-input)]",
               )}
             >
               {y.year}
@@ -161,6 +163,7 @@ export function YearPanel() {
           <BackgroundPicker
             bgColor={current.bgColor}
             bgPattern={current.bgPattern}
+            bgDotColor={current.bgDotColor}
             onChange={(patch) => apply((s) => updateYearMeta(s, current.year, patch))}
           />
         </div>

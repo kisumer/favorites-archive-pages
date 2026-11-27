@@ -26,6 +26,7 @@ export interface RoomRecord {
   customFontCss?: string;
   bgColor?: string;
   bgPattern?: PosterBgPattern;
+  bgDotColor?: string;
   categoryOrder: string[];
   categories: Record<string, Category>;
   images: Record<string, string>;
@@ -234,6 +235,7 @@ export function roomRecordToYearData(
       : "";
   const bgColor = isHexColor(r["bgColor"]) ? r["bgColor"].toUpperCase() : undefined;
   const bgPattern: PosterBgPattern | undefined = r["bgPattern"] === "dots" ? "dots" : undefined;
+  const bgDotColor = isHexColor(r["bgDotColor"]) ? r["bgDotColor"].toUpperCase() : undefined;
 
   return {
     yearData: {
@@ -244,6 +246,7 @@ export function roomRecordToYearData(
       ...(customFontCss ? { customFontCss } : {}),
       ...(bgColor ? { bgColor } : {}),
       ...(bgPattern ? { bgPattern } : {}),
+      ...(bgDotColor ? { bgDotColor } : {}),
       categories,
     },
     images,
@@ -382,13 +385,14 @@ export async function fetchRoomMeta(
   roomId: string,
 ): Promise<{ yearData: YearData; createdAt: number; updatedAt: number } | null> {
   const base = `${dbUrl}/rooms/${roomId}`;
-  const [year, title, font, customFontCss, bgColor, bgPattern, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
+  const [year, title, font, customFontCss, bgColor, bgPattern, bgDotColor, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
     rtdbRequest<unknown>(`${base}/year.json`, "GET"),
     rtdbRequest<unknown>(`${base}/title.json`, "GET"),
     rtdbRequest<unknown>(`${base}/font.json`, "GET"),
     rtdbRequest<unknown>(`${base}/customFontCss.json`, "GET"),
     rtdbRequest<unknown>(`${base}/bgColor.json`, "GET"),
     rtdbRequest<unknown>(`${base}/bgPattern.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/bgDotColor.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
     rtdbRequest<unknown>(`${base}/createdAt.json`, "GET"),
@@ -402,6 +406,7 @@ export async function fetchRoomMeta(
     customFontCss,
     bgColor,
     bgPattern,
+    bgDotColor,
     categoryOrder,
     categories,
     createdAt,
@@ -552,6 +557,10 @@ export async function syncYearDiff(
   }
   if ((prev.bgPattern ?? "solid") !== (next.bgPattern ?? "solid")) {
     rootPatch["bgPattern"] = next.bgPattern ?? "solid";
+    hasRootPatch = true;
+  }
+  if ((prev.bgDotColor ?? "") !== (next.bgDotColor ?? "")) {
+    rootPatch["bgDotColor"] = next.bgDotColor ?? null;
     hasRootPatch = true;
   }
 

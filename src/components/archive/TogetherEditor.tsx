@@ -49,7 +49,7 @@ function RoomLoadingSkeleton() {
 function RoomErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="border-b-2 border-ink bg-paper/95">
+      <header className="border-b border-[var(--border-soft)] bg-white/95">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" aria-label="최애 아카이브 처음 화면">
             <Wordmark />
@@ -60,7 +60,7 @@ function RoomErrorScreen({ message, onBack }: { message: string; onBack: () => v
         </div>
       </header>
       <main className="grid flex-1 place-items-center px-4 py-12">
-        <div className="w-full max-w-md rounded-3xl border-2 border-ink bg-card p-6 text-center shadow-pop-lg">
+        <div className="w-full max-w-md rounded-[24px] border border-[var(--border-soft)] bg-white p-6 text-center shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <p className="text-lg font-black">방을 열지 못했어요</p>
           <p className="mt-2 text-sm font-medium text-muted-foreground">{message}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -175,12 +175,12 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
       icon={Users}
       accentClassName="bg-sky"
       action={
-        <span className="rounded-full border-2 border-ink bg-lemon px-2.5 py-0.5 text-[12px] font-black tracking-wider">
+        <span className="rounded-full bg-[var(--yellow-soft)] px-3 py-1 text-[12px] font-bold tracking-wider text-[var(--ink-black)]">
           {roomId}
         </span>
       }
     >
-      <div className="rounded-2xl border-2 border-ink bg-paper-deep p-3">
+      <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-input)] p-3.5">
         <p className="text-[13px] font-bold">친구 초대하기</p>
         <p className="mt-0.5 text-[12px] font-medium text-muted-foreground">
           링크만 있으면 로그인 없이 바로 들어와 자기 칸을 채울 수 있어요.
@@ -238,6 +238,7 @@ function RoomInfoPanel({ roomId, onLeave }: { roomId: string; onLeave: () => voi
       <BackgroundPicker
         bgColor={current.bgColor}
         bgPattern={current.bgPattern}
+        bgDotColor={current.bgDotColor}
         onChange={(patch) =>
           apply((s) => ({
             ...s,
@@ -290,12 +291,12 @@ function TogetherRoomEditor({ roomId, onLeave }: { roomId: string; onLeave: () =
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b-2 border-ink bg-paper/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 lg:px-8">
           <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0">
             <Wordmark />
           </Link>
-          <span className="hidden rounded-full border-2 border-ink bg-mint px-2.5 py-0.5 text-[11px] font-black sm:inline-flex">
+          <span className="hidden rounded-full bg-[var(--yellow-soft)] px-3 py-1 text-[11px] font-bold text-[var(--ink-black)] sm:inline-flex">
             함께 만들기
           </span>
           <div className="hidden sm:block">
@@ -345,7 +346,7 @@ function TogetherRoomEditor({ roomId, onLeave }: { roomId: string; onLeave: () =
                 {zoom ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
               </Button>
             </div>
-            <div className="paper-dots overflow-auto rounded-3xl border-2 border-ink bg-paper-deep p-2 shadow-pop sm:p-4 lg:max-h-[calc(100dvh-10rem)]">
+            <div className="paper-dots overflow-auto rounded-[24px] border border-[var(--border-soft)] bg-[var(--bg-input)] p-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:p-4 lg:max-h-[calc(100dvh-10rem)]">
               <div className={cn("overflow-hidden rounded-xl shadow-soft", zoom && "w-[960px] max-w-none lg:w-auto")}>
                 <PosterPreview year={posterYear} theme="kitsch" images={images} onPick={onPick} />
               </div>
@@ -353,7 +354,7 @@ function TogetherRoomEditor({ roomId, onLeave }: { roomId: string; onLeave: () =
             <p className="mt-2 text-center text-[12px] font-semibold text-muted-foreground">
               다른 사람이 수정하면 화면에 자동으로 반영돼요 · 카드를 누르면 바로 편집해요
             </p>
-            <Button variant="popInk" size="lg" className="mt-3 hidden w-full lg:inline-flex" onClick={() => setExportOpen(true)}>
+            <Button variant="pop" size="lg" className="mt-3 hidden w-full lg:inline-flex" onClick={() => setExportOpen(true)}>
               <Download aria-hidden="true" />
               고화질 PNG로 저장하기
             </Button>
@@ -361,11 +362,11 @@ function TogetherRoomEditor({ roomId, onLeave }: { roomId: string; onLeave: () =
         </div>
       </main>
 
-      <SiteFooter className="mb-20 border-t-2 border-dashed border-border lg:mb-0" />
+      <SiteFooter className="mb-20 border-t border-[var(--border-soft)] lg:mb-0" />
 
       <nav
         aria-label="편집 화면 전환"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink bg-paper/95 px-3 pt-2 backdrop-blur lg:hidden"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border-soft)] bg-white/95 px-3 pt-2 backdrop-blur lg:hidden"
       >
         <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
           <Button

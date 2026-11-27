@@ -5,8 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * 최애 아카이브 design system — "scrapbook editorial".
- * Off-white paper, ink outlines, pastel sticker accents, hard offset "pop" shadows.
+ * 최애 아카이브 design system — clean warm paper, soft borders, sunshine yellow & ink black accents.
  */
 
 @theme inline {
@@ -67,9 +66,9 @@
   --color-sidebar-border: var(--border);
   --color-sidebar-ring: var(--ring);
 
-  --shadow-pop: 3px 3px 0 0 var(--ink);
-  --shadow-pop-lg: 6px 6px 0 0 var(--ink);
-  --shadow-soft: 0 18px 40px -20px color-mix(in oklab, var(--ink) 35%, transparent);
+  --shadow-pop: 0 2px 10px rgba(0, 0, 0, 0.03);
+  --shadow-pop-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 14px 32px -18px rgba(0, 0, 0, 0.16);
 
   --animate-float: float 6s ease-in-out infinite;
   --animate-spin-slow: spin 18s linear infinite;
@@ -79,35 +78,44 @@
 :root {
   --radius: 1rem;
 
-  --paper: #fafafa;
-  --paper-deep: #ededed;
-  --ink: oklch(0.2 0.014 290);
+  --bg-page: #f5f5f1;
+  --bg-card: #ffffff;
+  --bg-input: #f4f4f0;
+  --border-soft: #e5e5df;
+  --ink-black: #141414;
+  --ink-muted: #737373;
+  --yellow-main: #ffd829;
+  --yellow-soft: #fff6cc;
+
+  --paper: var(--bg-card);
+  --paper-deep: var(--bg-input);
+  --ink: var(--ink-black);
   --pink: oklch(0.84 0.1 355);
   --coral: oklch(0.79 0.12 35);
-  --lemon: oklch(0.94 0.13 105);
+  --lemon: var(--yellow-main);
   --mint: oklch(0.89 0.09 165);
   --sky: oklch(0.85 0.08 245);
   --lilac: oklch(0.8 0.1 300);
 
-  --background: #f2f2f2;
-  --foreground: var(--ink);
-  --card: oklch(1 0 0);
-  --card-foreground: var(--ink);
-  --popover: oklch(1 0 0);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-  --secondary: var(--lemon);
-  --secondary-foreground: var(--ink);
-  --muted: var(--paper-deep);
-  --muted-foreground: oklch(0.5 0.02 290);
-  --accent: oklch(0.95 0.035 355);
-  --accent-foreground: var(--ink);
+  --background: var(--bg-page);
+  --foreground: var(--ink-black);
+  --card: var(--bg-card);
+  --card-foreground: var(--ink-black);
+  --popover: var(--bg-card);
+  --popover-foreground: var(--ink-black);
+  --primary: var(--ink-black);
+  --primary-foreground: #ffffff;
+  --secondary: var(--yellow-main);
+  --secondary-foreground: var(--ink-black);
+  --muted: var(--bg-input);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--yellow-soft);
+  --accent-foreground: var(--ink-black);
   --destructive: oklch(0.58 0.21 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: #d6d6d6;
-  --input: #c6c6c6;
-  --ring: var(--ink);
+  --border: var(--border-soft);
+  --input: var(--border-soft);
+  --ring: var(--ink-black);
 }
 
 @layer base {
@@ -126,34 +134,34 @@
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: var(--pink);
-    color: var(--ink);
+    background: var(--yellow-soft);
+    color: var(--ink-black);
   }
 }
 
 @utility paper-dots {
   background-image: radial-gradient(
-    color-mix(in oklab, var(--ink) 9%, transparent) 1px,
+    color-mix(in oklab, var(--ink-black) 7%, transparent) 1px,
     transparent 1.2px
   );
   background-size: 18px 18px;
 }
 
 @utility outline-ink {
-  border: 2px solid var(--ink);
+  border: 1px solid var(--border-soft);
 }
 
 @utility dashed-ink {
-  border: 2px dashed var(--ink);
+  border: 1.5px dashed var(--border-soft);
 }
 
 @utility pressable {
   transition:
     transform 120ms ease,
-    box-shadow 120ms ease;
+    background-color 150ms ease,
+    filter 150ms ease;
   &:active:not(:disabled) {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 0 var(--ink);
+    transform: scale(0.98);
   }
 }
 

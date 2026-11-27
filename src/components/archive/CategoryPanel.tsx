@@ -107,12 +107,14 @@ export function CategoryPanel({
                   aria-pressed={active}
                   onClick={() => onSelect(c.id)}
                   className={cn(
-                    "flex h-10 shrink-0 items-center gap-2 rounded-full border-2 pl-1.5 pr-4 text-[14px] font-bold transition-colors touch-manipulation",
-                    active ? "border-ink bg-ink text-paper shadow-pop" : "border-input bg-card hover:border-ink",
+                    "flex h-10 shrink-0 items-center gap-2 rounded-full pl-1.5 pr-4 text-[14px] font-bold transition-colors touch-manipulation",
+                    active
+                      ? "border border-transparent bg-[var(--ink-black)] text-white"
+                      : "border border-[var(--border-soft)] bg-white text-[var(--ink-black)] hover:bg-[var(--bg-input)]",
                   )}
                 >
                   <span
-                    className="h-6 w-6 rounded-full border-2 border-ink"
+                    className="h-6 w-6 rounded-full border border-black/15"
                     style={{ backgroundColor: c.color }}
                     aria-hidden="true"
                   />

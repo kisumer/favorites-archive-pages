@@ -29,6 +29,8 @@ export interface YearData {
   customFontCss?: string;
   bgColor?: string;
   bgPattern?: PosterBgPattern;
+  /** Dot colour for the "dots" pattern. Undefined = automatic (derived from bgColor). */
+  bgDotColor?: string | undefined;
   categories: Category[];
 }
 

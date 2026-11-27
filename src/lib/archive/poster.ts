@@ -443,6 +443,7 @@ function drawPosterBackground(
   height: number,
   bgColor: string,
   pattern: PosterBgPattern,
+  dotColor?: string,
 ) {
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, width, height);
@@ -450,7 +451,9 @@ function drawPosterBackground(
 
   const darkBg = isDarkColor(bgColor);
   ctx.save();
-  ctx.fillStyle = darkBg
+  ctx.fillStyle = dotColor
+    ? dotColor
+    : darkBg
     ? "rgba(255, 255, 255, 0.16)"
     : isNearWhite(bgColor)
       ? "rgba(27, 26, 34, 0.09)"
@@ -761,7 +764,8 @@ export function drawPoster(
   const fgInk = darkBg ? "#FAFAFA" : st.ink;
   const fgMuted = darkBg ? "#C8C6D2" : st.muted;
 
-  drawPosterBackground(ctx, L.width, L.height, bgColor, bgPattern);
+  const dotColor = year.bgDotColor && isHexColor(year.bgDotColor) ? year.bgDotColor : undefined;
+  drawPosterBackground(ctx, L.width, L.height, bgColor, bgPattern, dotColor);
   drawHeader(ctx, L, year, theme, darkBg);
 
   L.categories.forEach((CL, i) => {

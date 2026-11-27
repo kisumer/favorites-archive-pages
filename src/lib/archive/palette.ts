@@ -32,6 +32,15 @@ export const POSTER_BG_COLORS: Swatch[] = [
   { hex: "#1B1A22", label: "블랙" },
 ];
 
+/** Dot colours for the "dots" poster background pattern. */
+export const POSTER_DOT_COLORS: Swatch[] = [
+  { hex: "#FFFFFF", label: "화이트" },
+  { hex: "#FFB3D1", label: "핑크" },
+  { hex: "#FFF07A", label: "레몬" },
+  { hex: "#A9D4FF", label: "스카이" },
+  { hex: "#1B1A22", label: "블랙" },
+];
+
 /** One colour per month for the rainbow month badges. */
 export const RAINBOW: string[] = [
   "#FFB3D1",

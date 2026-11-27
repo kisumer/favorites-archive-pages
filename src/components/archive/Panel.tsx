@@ -9,33 +9,28 @@ export const Panel = forwardRef<
     step: string;
     title: string;
     icon: LucideIcon;
-    accentClassName: string;
+    accentClassName?: string;
     action?: ReactNode;
     children: ReactNode;
     className?: string;
   }
->(function Panel({ step, title, icon: Icon, accentClassName, action, children, className }, ref) {
+>(function Panel({ step, title, icon: Icon, action, children, className }, ref) {
   return (
     <section
       ref={ref}
       aria-label={title}
       className={cn(
-        "scroll-mt-24 rounded-3xl border-2 border-ink bg-card p-4 shadow-pop sm:p-5",
+        "scroll-mt-24 rounded-[24px] border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:p-5",
         className,
       )}
     >
       <header className="mb-4 flex items-center gap-3">
-        <span
-          className={cn(
-            "grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink",
-            accentClassName,
-          )}
-        >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-none bg-[var(--yellow-soft)] text-[var(--ink-black)]">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-black tracking-[0.16em] text-muted-foreground">{step}</p>
-          <h2 className="truncate text-lg font-black leading-tight">{title}</h2>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-[var(--ink-muted)]">{step}</p>
+          <h2 className="truncate text-lg font-black leading-tight text-[var(--ink-black)]">{title}</h2>
         </div>
         {action}
       </header>
@@ -55,13 +50,13 @@ export function FieldLabel({
 }) {
   return (
     <div className="mb-1.5 flex items-baseline justify-between gap-2">
-      <label htmlFor={htmlFor} className="text-[13px] font-bold">
+      <label htmlFor={htmlFor} className="text-[13px] font-bold text-[var(--ink-black)]">
         {children}
       </label>
-      {hint ? <span className="text-[11px] font-semibold text-muted-foreground">{hint}</span> : null}
+      {hint ? <span className="text-[11px] font-semibold text-[var(--ink-muted)]">{hint}</span> : null}
     </div>
   );
 }
 
 export const inputClass =
-  "w-full rounded-xl border-2 border-input bg-card px-3.5 text-[16px] font-semibold placeholder:font-medium placeholder:text-muted-foreground/70 transition-colors focus:border-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-lemon";
+  "w-full rounded-[14px] border-[1.5px] border-transparent bg-[var(--bg-input)] px-3.5 py-3 text-[16px] font-semibold text-[var(--ink-black)] placeholder:font-medium placeholder:text-[var(--ink-muted)]/75 transition-[background-color,border-color] duration-150 focus:border-[var(--ink-black)] focus:bg-white focus:outline-none";

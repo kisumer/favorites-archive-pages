@@ -1,9 +1,21 @@
 import { Check, Palette, Plus } from "lucide-react";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
-import { DEFAULT_POSTER_BG, isDarkColor, POSTER_BG_COLORS } from "@/lib/archive/palette";
+import {
+  DEFAULT_POSTER_BG,
+  isDarkColor,
+  POSTER_BG_COLORS,
+  POSTER_DOT_COLORS,
+  type Swatch,
+} from "@/lib/archive/palette";
 import type { PosterBgPattern } from "@/lib/archive/types";
 import { cn } from "@/lib/utils";
+
+export interface BackgroundPatch {
+  bgColor?: string;
+  bgPattern?: PosterBgPattern;
+  bgDotColor?: string | undefined;
+}
 
 function DotsIcon() {
   return (
@@ -17,19 +29,102 @@ function DotsIcon() {
   );
 }
 
+const swatchClass =
+  "relative grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink transition-transform touch-manipulation active:scale-95";
+const selectedRing = "ring-2 ring-ink ring-offset-2 ring-offset-card";
+
+/** Row of preset swatches + a custom colour picker. `active` undefined = nothing selected. */
+function ColorRow({
+  swatches,
+  active,
+  onPick,
+  groupLabel,
+  itemLabel,
+  leading,
+}: {
+  swatches: Swatch[];
+  active: string | undefined;
+  onPick: (hex: string) => void;
+  groupLabel: string;
+  itemLabel: string;
+  leading?: ReactNode;
+}) {
+  const inputId = useId();
+  const isCustom = active !== undefined && !swatches.some((c) => c.hex.toUpperCase() === active);
+  return (
+    <div className="flex items-center justify-between gap-1.5" role="group" aria-label={groupLabel}>
+      {leading}
+      {swatches.map((swatch) => {
+        const selected = active === swatch.hex.toUpperCase();
+        return (
+          <button
+            key={swatch.hex}
+            type="button"
+            title={swatch.label}
+            aria-label={`${itemLabel} ${swatch.label}`}
+            aria-pressed={selected}
+            onClick={() => onPick(swatch.hex)}
+            style={{ backgroundColor: swatch.hex }}
+            className={cn(swatchClass, selected && selectedRing)}
+          >
+            {selected ? (
+              <Check
+                className={cn("h-4 w-4 stroke-[3]", isDarkColor(swatch.hex) ? "text-white" : "text-ink")}
+                aria-hidden="true"
+              />
+            ) : null}
+          </button>
+        );
+      })}
+
+      <label
+        htmlFor={inputId}
+        title={`직접 ${itemLabel} 고르기`}
+        aria-label={`직접 ${itemLabel} 고르기`}
+        style={{
+          background: isCustom
+            ? active
+            : "conic-gradient(from 0deg, #ff7eb3, #ffe066, #7bed9f, #70a1ff, #c5a3ff, #ff7eb3)",
+        }}
+        className={cn(swatchClass, "cursor-pointer", isCustom && selectedRing)}
+      >
+        <input
+          id={inputId}
+          type="color"
+          value={active ?? "#FFFFFF"}
+          onChange={(e) => onPick(e.target.value.toUpperCase())}
+          className="sr-only"
+        />
+        {isCustom ? (
+          <Check
+            className={cn("h-4 w-4 stroke-[3]", isDarkColor(active ?? "#FFFFFF") ? "text-white" : "text-ink")}
+            aria-hidden="true"
+          />
+        ) : null}
+        <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border-[1.5px] border-ink bg-white text-ink">
+          <Plus className="h-2.5 w-2.5 stroke-[3]" aria-hidden="true" />
+        </span>
+      </label>
+    </div>
+  );
+}
+
 export function BackgroundPicker({
   bgColor,
   bgPattern,
+  bgDotColor,
   onChange,
 }: {
   bgColor?: string | undefined;
   bgPattern?: PosterBgPattern | undefined;
-  onChange: (patch: { bgColor?: string; bgPattern?: PosterBgPattern }) => void;
+  bgDotColor?: string | undefined;
+  onChange: (patch: BackgroundPatch) => void;
 }) {
-  const colorId = useId();
   const activeColor = (bgColor ?? DEFAULT_POSTER_BG).toUpperCase();
   const activePattern: PosterBgPattern = bgPattern === "dots" ? "dots" : "solid";
+  const activeDot = bgDotColor ? bgDotColor.toUpperCase() : undefined;
   const isCustomColor = !POSTER_BG_COLORS.some((c) => c.hex.toUpperCase() === activeColor);
+  const isCustomDot = activeDot !== undefined && !POSTER_DOT_COLORS.some((c) => c.hex.toUpperCase() === activeDot);
 
   return (
     <div className="mt-4">
@@ -39,73 +134,18 @@ export function BackgroundPicker({
           포스터 배경
         </span>
         {isCustomColor ? (
-          <span className="text-[11px] font-bold tabular-nums text-muted-foreground">
-            {activeColor}
-          </span>
+          <span className="text-[11px] font-bold tabular-nums text-muted-foreground">{activeColor}</span>
         ) : null}
       </div>
 
-      {/* Row 1: Swatches + Rainbow Color Picker */}
-      <div className="flex items-center justify-between gap-1.5" role="group" aria-label="포스터 배경색 선택">
-        {POSTER_BG_COLORS.map((swatch) => {
-          const selected = activeColor === swatch.hex.toUpperCase();
-          const dark = isDarkColor(swatch.hex);
-          return (
-            <button
-              key={swatch.hex}
-              type="button"
-              title={swatch.label}
-              aria-label={`배경색 ${swatch.label}`}
-              aria-pressed={selected}
-              onClick={() => onChange({ bgColor: swatch.hex })}
-              style={{ backgroundColor: swatch.hex }}
-              className={cn(
-                "relative grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink transition-transform touch-manipulation active:scale-95",
-                selected && "ring-2 ring-ink ring-offset-2 ring-offset-card",
-              )}
-            >
-              {selected ? (
-                <Check
-                  className={cn("h-4 w-4 stroke-[3]", dark ? "text-white" : "text-ink")}
-                  aria-hidden="true"
-                />
-              ) : null}
-            </button>
-          );
-        })}
-
-        <label
-          htmlFor={colorId}
-          title="직접 배경색 고르기"
-          aria-label="직접 배경색 고르기"
-          style={{
-            background: isCustomColor
-              ? activeColor
-              : "conic-gradient(from 0deg, #ff7eb3, #ffe066, #7bed9f, #70a1ff, #c5a3ff, #ff7eb3)",
-          }}
-          className={cn(
-            "relative grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-ink transition-transform touch-manipulation active:scale-95",
-            isCustomColor && "ring-2 ring-ink ring-offset-2 ring-offset-card",
-          )}
-        >
-          <input
-            id={colorId}
-            type="color"
-            value={activeColor}
-            onChange={(e) => onChange({ bgColor: e.target.value.toUpperCase() })}
-            className="sr-only"
-          />
-          {isCustomColor ? (
-            <Check
-              className={cn("h-4 w-4 stroke-[3]", isDarkColor(activeColor) ? "text-white" : "text-ink")}
-              aria-hidden="true"
-            />
-          ) : null}
-          <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border-[1.5px] border-ink bg-white text-ink">
-            <Plus className="h-2.5 w-2.5 stroke-[3]" aria-hidden="true" />
-          </span>
-        </label>
-      </div>
+      {/* Row 1: background colour */}
+      <ColorRow
+        swatches={POSTER_BG_COLORS}
+        active={activeColor}
+        onPick={(hex) => onChange({ bgColor: hex })}
+        groupLabel="포스터 배경색 선택"
+        itemLabel="배경색"
+      />
 
       {/* Row 2: Solid / Dots segmented toggle */}
       <div
@@ -137,6 +177,44 @@ export function BackgroundPicker({
           <DotsIcon />
         </button>
       </div>
+
+      {/* Row 3: dot colour (only for the dots pattern) */}
+      {activePattern === "dots" ? (
+        <div className="mt-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 text-[13px] font-bold">
+              <DotsIcon />
+              도트 색
+            </span>
+            {isCustomDot ? (
+              <span className="text-[11px] font-bold tabular-nums text-muted-foreground">{activeDot}</span>
+            ) : null}
+          </div>
+          <ColorRow
+            swatches={POSTER_DOT_COLORS}
+            active={activeDot}
+            onPick={(hex) => onChange({ bgDotColor: hex })}
+            groupLabel="도트 색 선택"
+            itemLabel="도트 색"
+            leading={
+              <button
+                type="button"
+                title="배경색에 맞춰 자동"
+                aria-label="도트 색 자동"
+                aria-pressed={activeDot === undefined}
+                onClick={() => onChange({ bgDotColor: undefined })}
+                className={cn(
+                  swatchClass,
+                  "bg-card text-[10px] font-black text-ink",
+                  activeDot === undefined && selectedRing,
+                )}
+              >
+                자동
+              </button>
+            }
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

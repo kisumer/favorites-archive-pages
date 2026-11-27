@@ -105,7 +105,7 @@ function Editor() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b-2 border-ink bg-paper/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-[var(--border-soft)] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 lg:px-8">
           <Link to="/" aria-label="최애 아카이브 처음 화면" className="shrink-0">
             <Wordmark />
@@ -116,7 +116,7 @@ function Editor() {
           <div className="ml-auto flex items-center gap-1.5">
             <Link
               to="/together/"
-              className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-mint px-3 text-[13px] font-black text-ink transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-9 items-center rounded-full bg-[var(--yellow-soft)] px-3.5 text-[13px] font-bold text-[var(--ink-black)] transition-colors hover:brightness-95"
             >
               함께 만들기
             </Link>
@@ -159,7 +159,7 @@ function Editor() {
                 {zoom ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
               </Button>
             </div>
-            <div className="paper-dots overflow-auto rounded-3xl border-2 border-ink bg-paper-deep p-2 shadow-pop sm:p-4 lg:max-h-[calc(100dvh-10rem)]">
+            <div className="paper-dots overflow-auto rounded-[24px] border border-[var(--border-soft)] bg-[var(--bg-input)] p-2 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:p-4 lg:max-h-[calc(100dvh-10rem)]">
               <div className={cn("overflow-hidden rounded-xl shadow-soft", zoom && "w-[960px] max-w-none lg:w-auto")}>
                 <PosterPreview year={posterYear} theme="kitsch" images={images} onPick={onPick} />
               </div>
@@ -167,7 +167,7 @@ function Editor() {
             <p className="mt-2 text-center text-[12px] font-semibold text-muted-foreground">
               카드를 누르면 그 달을 바로 편집할 수 있어요
             </p>
-            <Button variant="popInk" size="lg" className="mt-3 hidden w-full lg:inline-flex" onClick={openExport}>
+            <Button variant="pop" size="lg" className="mt-3 hidden w-full lg:inline-flex" onClick={openExport}>
               <Download aria-hidden="true" />
               고화질 PNG로 저장하기
             </Button>
@@ -175,11 +175,11 @@ function Editor() {
         </div>
       </main>
 
-      <SiteFooter className="mb-20 border-t-2 border-dashed border-border lg:mb-0" />
+      <SiteFooter className="mb-20 border-t border-[var(--border-soft)] lg:mb-0" />
 
       <nav
         aria-label="편집 화면 전환"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink bg-paper/95 px-3 pt-2 backdrop-blur lg:hidden"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border-soft)] bg-white/95 px-3 pt-2 backdrop-blur lg:hidden"
       >
         <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
           <Button
