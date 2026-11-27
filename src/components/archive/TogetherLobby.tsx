@@ -118,7 +118,7 @@ export function TogetherLobby({
           </p>
           <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)] px-3.5 py-1 text-[12px] font-semibold text-[var(--ink-muted)]">
             <Clock className="h-3.5 w-3.5 shrink-0 text-[var(--ink-black)]" aria-hidden="true" />
-            <span>생성 후 24시간 뒤 자동 삭제돼요 · 완성 후 꼭 저장해 주세요</span>
+            <span>생성 후 6시간 뒤 자동 삭제돼요 · 완성 후 꼭 저장해 주세요</span>
           </p>
         </div>
 
