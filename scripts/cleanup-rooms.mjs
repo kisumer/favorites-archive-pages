@@ -1,7 +1,7 @@
 import { createSign } from "node:crypto";
 
 const DB_URL = (
-  process.env.FIREBASE_DB_URL || "https://favorite-archive-default-rtdb.firebaseio.com"
+  process.env.FIREBASE_DB_URL || "https://fav-932a6-default-rtdb.firebaseio.com"
 ).replace(/\/+$/, "");
 const TTL_MS = 24 * 60 * 60 * 1000;
 

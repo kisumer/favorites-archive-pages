@@ -33,8 +33,14 @@ export function validatePhoto(file: File) {
   }
 }
 
-export async function compressImage(file: File, crop: PhotoCrop = DEFAULT_PHOTO_CROP): Promise<string> {
+export async function compressImage(
+  file: File,
+  crop: PhotoCrop = DEFAULT_PHOTO_CROP,
+  opts: { maxSize?: number; quality?: number } = {},
+): Promise<string> {
   validatePhoto(file);
+  const maxSize = opts.maxSize ?? 800;
+  const quality = opts.quality ?? 0.84;
   const url = URL.createObjectURL(file);
   try {
     let img: HTMLImageElement;
@@ -47,7 +53,7 @@ export async function compressImage(file: File, crop: PhotoCrop = DEFAULT_PHOTO_
     const h = img.naturalHeight;
     const { side, left, top } = getPhotoCrop(w, h, crop);
     if (!side) throw new Error("사진 크기를 읽을 수 없어요.");
-    const out = Math.max(1, Math.min(800, Math.round(side)));
+    const out = Math.max(1, Math.min(maxSize, Math.round(side)));
     const canvas = document.createElement("canvas");
     canvas.width = out;
     canvas.height = out;
@@ -57,7 +63,7 @@ export async function compressImage(file: File, crop: PhotoCrop = DEFAULT_PHOTO_
     ctx.fillRect(0, 0, out, out);
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(img, left, top, side, side, 0, 0, out, out);
-    const data = canvas.toDataURL("image/jpeg", 0.84);
+    const data = canvas.toDataURL("image/jpeg", quality);
     if (!data.startsWith("data:image/")) throw new Error("사진을 변환하지 못했어요.");
     return data;
   } finally {
