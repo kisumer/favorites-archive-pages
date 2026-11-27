@@ -30,8 +30,8 @@ function DotsIcon() {
 }
 
 const swatchClass =
-  "relative grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink transition-transform touch-manipulation active:scale-95";
-const selectedRing = "ring-2 ring-ink ring-offset-2 ring-offset-card";
+  "relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--border-soft)] transition-transform touch-manipulation active:scale-95";
+const selectedRing = "ring-[1.5px] ring-[var(--ink-black)] ring-offset-2 ring-offset-white";
 
 /** Row of preset swatches + a custom colour picker. `active` undefined = nothing selected. */
 function ColorRow({
@@ -101,8 +101,8 @@ function ColorRow({
             aria-hidden="true"
           />
         ) : null}
-        <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border-[1.5px] border-ink bg-white text-ink">
-          <Plus className="h-2.5 w-2.5 stroke-[3]" aria-hidden="true" />
+        <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full border border-[var(--border-soft)] bg-white text-[var(--ink-black)] shadow-xs">
+          <Plus className="h-2.5 w-2.5 stroke-[2.5]" aria-hidden="true" />
         </span>
       </label>
     </div>
@@ -149,7 +149,7 @@ export function BackgroundPicker({
 
       {/* Row 2: Solid / Dots segmented toggle */}
       <div
-        className="mt-2.5 grid grid-cols-2 rounded-full border-2 border-ink bg-card p-0.5"
+        className="mt-2.5 grid grid-cols-2 rounded-full border border-[var(--border-soft)] bg-[var(--bg-input)] p-1"
         role="group"
         aria-label="배경 패턴 선택"
       >
@@ -158,8 +158,10 @@ export function BackgroundPicker({
           aria-pressed={activePattern === "solid"}
           onClick={() => onChange({ bgPattern: "solid" })}
           className={cn(
-            "h-9 rounded-full text-[13px] font-black transition-colors touch-manipulation",
-            activePattern === "solid" ? "bg-ink text-paper" : "text-ink hover:bg-paper-deep",
+            "h-8 rounded-full text-[13px] font-bold transition-colors touch-manipulation",
+            activePattern === "solid"
+              ? "bg-[var(--ink-black)] text-white"
+              : "text-[var(--ink-muted)] hover:text-[var(--ink-black)]",
           )}
         >
           단색
@@ -169,8 +171,10 @@ export function BackgroundPicker({
           aria-pressed={activePattern === "dots"}
           onClick={() => onChange({ bgPattern: "dots" })}
           className={cn(
-            "inline-flex h-9 items-center justify-center gap-1.5 rounded-full text-[13px] font-black transition-colors touch-manipulation",
-            activePattern === "dots" ? "bg-ink text-paper" : "text-ink hover:bg-paper-deep",
+            "inline-flex h-8 items-center justify-center gap-1.5 rounded-full text-[13px] font-bold transition-colors touch-manipulation",
+            activePattern === "dots"
+              ? "bg-[var(--ink-black)] text-white"
+              : "text-[var(--ink-muted)] hover:text-[var(--ink-black)]",
           )}
         >
           도트
