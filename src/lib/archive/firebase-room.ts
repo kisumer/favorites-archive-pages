@@ -5,7 +5,7 @@ import type { BadgeMode, Category, MonthPick, PosterBgPattern, PosterFontId, Yea
 
 const DB_URL_STORAGE_KEY = "choiae:together:dbUrl";
 const RECENT_ROOMS_KEY = "choiae:together:recentRooms";
-export const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+export const ROOM_TTL_MS = 6 * 60 * 60 * 1000;
 
 export function isRoomExpired(updatedAt: number, now: number = Date.now()): boolean {
   return Number.isFinite(updatedAt) && now - updatedAt >= ROOM_TTL_MS;
@@ -486,7 +486,7 @@ export async function fetchRoom(
   if (!meta) return null;
   if (isRoomExpired(meta.createdAt)) {
     await deleteRoom(dbUrl, roomId).catch(() => undefined);
-    throw new Error("방 생성 후 24시간이 지나 자동으로 삭제된 방이에요.");
+    throw new Error("방 생성 후 6시간이 지나 자동으로 삭제된 방이에요.");
   }
   const neededIds = collectYearImageIds(meta.yearData);
   const missingIds = neededIds.filter((id) => !cachedImages[id]);
