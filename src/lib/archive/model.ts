@@ -174,7 +174,9 @@ export function deleteYear(state: ArchiveState, year: number): Result {
 export function updateYearMeta(
   state: ArchiveState,
   year: number,
-  patch: Partial<Pick<YearData, "title" | "author" | "font" | "customFontCss" | "bgColor" | "bgPattern" | "bgDotColor">>,
+  patch: Partial<
+    Pick<YearData, "title" | "author" | "font" | "customFontCss" | "bgColor" | "bgPattern" | "bgDotColor" | "titleHighlightColor">
+  >,
 ): Result {
   if (!getYear(state, year)) return { ok: false, error: "해당 연도를 찾을 수 없어요." };
   return { ok: true, state: mapYear(state, year, (y) => ({ ...y, ...patch })) };
@@ -428,6 +430,12 @@ export function normalizeState(raw: unknown): ArchiveState | null {
     const bgColor = isHexColor(y["bgColor"]) ? y["bgColor"].toUpperCase() : undefined;
     const bgPattern = y["bgPattern"] === "dots" ? "dots" : undefined;
     const bgDotColor = isHexColor(y["bgDotColor"]) ? y["bgDotColor"].toUpperCase() : undefined;
+    const titleHighlightColor =
+      y["titleHighlightColor"] === "none"
+        ? "none"
+        : isHexColor(y["titleHighlightColor"])
+          ? y["titleHighlightColor"].toUpperCase()
+          : undefined;
     years.push({
       year,
       title: str(y["title"], LIMITS.title),
@@ -438,6 +446,7 @@ export function normalizeState(raw: unknown): ArchiveState | null {
       ...(bgColor ? { bgColor } : {}),
       ...(bgPattern ? { bgPattern } : {}),
       ...(bgDotColor ? { bgDotColor } : {}),
+      ...(titleHighlightColor ? { titleHighlightColor } : {}),
       categories,
     });
   }

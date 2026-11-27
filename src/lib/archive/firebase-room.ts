@@ -27,6 +27,7 @@ export interface RoomRecord {
   bgColor?: string;
   bgPattern?: PosterBgPattern;
   bgDotColor?: string;
+  titleHighlightColor?: string;
   categoryOrder: string[];
   categories: Record<string, Category>;
   images: Record<string, string>;
@@ -236,6 +237,12 @@ export function roomRecordToYearData(
   const bgColor = isHexColor(r["bgColor"]) ? r["bgColor"].toUpperCase() : undefined;
   const bgPattern: PosterBgPattern | undefined = r["bgPattern"] === "dots" ? "dots" : undefined;
   const bgDotColor = isHexColor(r["bgDotColor"]) ? r["bgDotColor"].toUpperCase() : undefined;
+  const titleHighlightColor =
+    r["titleHighlightColor"] === "none"
+      ? "none"
+      : isHexColor(r["titleHighlightColor"])
+        ? r["titleHighlightColor"].toUpperCase()
+        : undefined;
 
   return {
     yearData: {
@@ -247,6 +254,7 @@ export function roomRecordToYearData(
       ...(bgColor ? { bgColor } : {}),
       ...(bgPattern ? { bgPattern } : {}),
       ...(bgDotColor ? { bgDotColor } : {}),
+      ...(titleHighlightColor ? { titleHighlightColor } : {}),
       categories,
     },
     images,
@@ -385,7 +393,20 @@ export async function fetchRoomMeta(
   roomId: string,
 ): Promise<{ yearData: YearData; createdAt: number; updatedAt: number } | null> {
   const base = `${dbUrl}/rooms/${roomId}`;
-  const [year, title, font, customFontCss, bgColor, bgPattern, bgDotColor, categoryOrder, categories, createdAt, updatedAt] = await Promise.all([
+  const [
+    year,
+    title,
+    font,
+    customFontCss,
+    bgColor,
+    bgPattern,
+    bgDotColor,
+    titleHighlightColor,
+    categoryOrder,
+    categories,
+    createdAt,
+    updatedAt,
+  ] = await Promise.all([
     rtdbRequest<unknown>(`${base}/year.json`, "GET"),
     rtdbRequest<unknown>(`${base}/title.json`, "GET"),
     rtdbRequest<unknown>(`${base}/font.json`, "GET"),
@@ -393,6 +414,7 @@ export async function fetchRoomMeta(
     rtdbRequest<unknown>(`${base}/bgColor.json`, "GET"),
     rtdbRequest<unknown>(`${base}/bgPattern.json`, "GET"),
     rtdbRequest<unknown>(`${base}/bgDotColor.json`, "GET"),
+    rtdbRequest<unknown>(`${base}/titleHighlightColor.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categoryOrder.json`, "GET"),
     rtdbRequest<unknown>(`${base}/categories.json`, "GET"),
     rtdbRequest<unknown>(`${base}/createdAt.json`, "GET"),
@@ -407,6 +429,7 @@ export async function fetchRoomMeta(
     bgColor,
     bgPattern,
     bgDotColor,
+    titleHighlightColor,
     categoryOrder,
     categories,
     createdAt,
@@ -561,6 +584,10 @@ export async function syncYearDiff(
   }
   if ((prev.bgDotColor ?? "") !== (next.bgDotColor ?? "")) {
     rootPatch["bgDotColor"] = next.bgDotColor ?? null;
+    hasRootPatch = true;
+  }
+  if ((prev.titleHighlightColor ?? "") !== (next.titleHighlightColor ?? "")) {
+    rootPatch["titleHighlightColor"] = next.titleHighlightColor ?? null;
     hasRootPatch = true;
   }
 

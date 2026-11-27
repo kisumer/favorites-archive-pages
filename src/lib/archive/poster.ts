@@ -485,16 +485,21 @@ function drawHeader(ctx: Ctx, L: PosterLayout, year: YearData, theme: ThemeId, d
     const titleInk = centeredInk(ctx, L.title);
     const tw = titleInk.width;
     // highlighter swipe behind title
-    ctx.save();
-    ctx.fillStyle = "#FFB3D1";
-    ctx.globalAlpha = darkBg ? 0.45 : 0.55;
-    roundRectPath(
-      ctx,
-      { x: cx - tw / 2 - 14, y: L.titleY + L.titleSize * 0.21, w: tw + 28, h: L.titleSize * 0.36 },
-      10,
-    );
-    ctx.fill();
-    ctx.restore();
+    if (year.titleHighlightColor !== "none") {
+      ctx.save();
+      ctx.fillStyle =
+        year.titleHighlightColor && isHexColor(year.titleHighlightColor)
+          ? year.titleHighlightColor
+          : "#FFB3D1";
+      ctx.globalAlpha = darkBg ? 0.45 : 0.55;
+      roundRectPath(
+        ctx,
+        { x: cx - tw / 2 - 14, y: L.titleY + L.titleSize * 0.21, w: tw + 28, h: L.titleSize * 0.36 },
+        10,
+      );
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.fillStyle = fgInk;
     ctx.fillText(L.title, cx + titleInk.offsetX, L.titleY + titleInk.offsetY);
     ctx.restore();

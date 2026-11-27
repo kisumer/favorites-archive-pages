@@ -31,6 +31,8 @@ export interface YearData {
   bgPattern?: PosterBgPattern;
   /** Dot colour for the "dots" pattern. Undefined = automatic (derived from bgColor). */
   bgDotColor?: string | undefined;
+  /** Title highlighter swipe colour (hex) or "none" to hide. Undefined = default pink (#FFB3D1). */
+  titleHighlightColor?: string | undefined;
   categories: Category[];
 }
 
