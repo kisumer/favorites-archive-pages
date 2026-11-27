@@ -43,7 +43,7 @@ export function normalizeDbUrl(raw: string): string | null {
 const DEFAULT_DB_URL = "https://favorite-archive-default-rtdb.firebaseio.com";
 
 export function getEnvDbUrl(): string | null {
-  const raw = import.meta.env.VITE_FIREBASE_DB_URL as string | undefined;
+  const raw = import.meta.env["VITE_FIREBASE_DB_URL"] as string | undefined;
   return (raw ? normalizeDbUrl(raw) : null) ?? DEFAULT_DB_URL;
 }
 

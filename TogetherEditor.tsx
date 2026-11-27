@@ -375,11 +375,11 @@ export function TogetherApp({ roomId }: { roomId?: string | undefined }) {
   const [dbUrl, setDbUrl] = useState<string | null>(() => getConfiguredDbUrl());
 
   const goRoom = (id: string) => {
-    void navigate({ to: "/together", search: { room: id } });
+    void navigate({ to: "/together/", search: { room: id } });
   };
 
   const leaveRoom = () => {
-    void navigate({ to: "/together", search: {} });
+    void navigate({ to: "/together/", search: {} });
   };
 
   if (roomId && dbUrl) {
