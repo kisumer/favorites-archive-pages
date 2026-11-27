@@ -42,9 +42,14 @@ function Landing() {
     <div className="min-h-dvh overflow-x-hidden bg-background">
       <header className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         <Wordmark />
-        <Link to="/make/" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          만들기
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/together/" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            함께 만들기
+          </Link>
+          <Link to="/make/" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            혼자 만들기
+          </Link>
+        </div>
       </header>
 
       <main>
@@ -71,14 +76,18 @@ function Landing() {
             </p>
             <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <Link to="/make/" className={cn(buttonVariants({ variant: "pop", size: "xl" }), "w-full sm:w-auto")}>
-                내 취향표 만들기
+                혼자 만들기
                 <ArrowRight aria-hidden="true" />
               </Link>
-              <p className="inline-flex items-center gap-1.5 text-[13px] font-bold text-muted-foreground">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                사진은 내 기기에만 저장돼요
-              </p>
+              <Link to="/together/" className={cn(buttonVariants({ variant: "popInk", size: "xl" }), "w-full sm:w-auto")}>
+                함께 만들기
+                <ArrowRight aria-hidden="true" />
+              </Link>
             </div>
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-bold text-muted-foreground">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              혼자 만들기는 내 기기에만 저장돼요
+            </p>
           </div>
 
           <div className="relative mt-10 lg:mt-0">

@@ -9,44 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as MakeRouteImport } from './routes/make'
+import { Route as TogetherRouteImport } from './routes/together'
+import { Route as IndexRouteImport } from './routes/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MakeRoute = MakeRouteImport.update({
   id: '/make',
   path: '/make',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TogetherRoute = TogetherRouteImport.update({
+  id: '/together',
+  path: '/together',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/make': typeof MakeRoute
+  '/together': typeof TogetherRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/make': typeof MakeRoute
+  '/together': typeof TogetherRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/make': typeof MakeRoute
+  '/together': typeof TogetherRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/make'
+  fullPaths: '/' | '/make' | '/together'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/make'
-  id: '__root__' | '/' | '/make'
+  to: '/' | '/make' | '/together'
+  id: '__root__' | '/' | '/make' | '/together'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MakeRoute: typeof MakeRoute
+  TogetherRoute: typeof TogetherRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MakeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/together': {
+      id: '/together'
+      path: '/together'
+      fullPath: '/together'
+      preLoaderRoute: typeof TogetherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MakeRoute: MakeRoute,
+  TogetherRoute: TogetherRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

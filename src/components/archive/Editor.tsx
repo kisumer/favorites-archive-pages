@@ -114,6 +114,12 @@ function Editor() {
             <SaveBadge />
           </div>
           <div className="ml-auto flex items-center gap-1.5">
+            <Link
+              to="/together/"
+              className="inline-flex h-9 items-center rounded-xl border-2 border-ink bg-mint px-3 text-[13px] font-black text-ink transition-transform hover:-translate-y-0.5"
+            >
+              함께 만들기
+            </Link>
             <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="사용 방법" title="사용 방법">
               <CircleHelp aria-hidden="true" />
             </Button>

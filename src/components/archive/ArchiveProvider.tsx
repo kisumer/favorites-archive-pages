@@ -14,9 +14,9 @@ import type { ArchiveState, Result } from "@/lib/archive/types";
 
 export type SaveStatus = "saved" | "saving" | "error";
 
-type Updater = (s: ArchiveState) => Result | ArchiveState;
+export type Updater = (s: ArchiveState) => Result | ArchiveState;
 
-interface ArchiveContextValue {
+export interface ArchiveContextValue {
   state: ArchiveState;
   images: Record<string, string>;
   storeKind: StoreKind;
@@ -28,7 +28,7 @@ interface ArchiveContextValue {
   resetAll: () => Promise<void>;
 }
 
-const ArchiveContext = createContext<ArchiveContextValue | null>(null);
+export const ArchiveContext = createContext<ArchiveContextValue | null>(null);
 
 export function useArchive(): ArchiveContextValue {
   const ctx = useContext(ArchiveContext);

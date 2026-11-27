@@ -6,6 +6,7 @@ if (measurementId && !/^G-[A-Z0-9]+$/.test(measurementId)) {
 }
 
 await mkdir("dist/make", { recursive: true });
+await mkdir("dist/together", { recursive: true });
 await copyFile("dist/index.html", "dist/404.html");
 
 if (measurementId) {
@@ -26,4 +27,5 @@ if (measurementId) {
 }
 
 await copyFile("dist/index.html", "dist/make/index.html");
+await copyFile("dist/index.html", "dist/together/index.html");
 await writeFile("dist/.nojekyll", "");
