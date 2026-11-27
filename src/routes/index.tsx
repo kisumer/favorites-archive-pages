@@ -302,7 +302,7 @@ function Landing() {
             </section>
 
             {/* 4. Dual Primary Action Links (Below star on mobile, below headline on PC) */}
-            <section className="order-3 mt-[168px] shrink-0 space-y-2.5 pt-1 lg:mt-0 lg:grid lg:max-w-[480px] lg:grid-cols-2 lg:gap-3.5 lg:space-y-0 lg:pt-0">
+            <section className="order-3 mt-[112px] shrink-0 space-y-2.5 pt-1 lg:mt-0 lg:grid lg:max-w-[480px] lg:grid-cols-2 lg:gap-3.5 lg:space-y-0 lg:pt-0">
               <Link
                 to="/make/"
                 className="flex h-[58px] w-full items-center justify-between rounded-[20px] bg-[#FFD829] px-5 text-left text-[#141414] transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97] lg:h-[64px]"
