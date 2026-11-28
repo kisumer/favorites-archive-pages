@@ -736,15 +736,8 @@ export function subscribeRoom(
   let closed = false;
   let fetching = false;
   let pendingRefresh = false;
-  let es: EventSource | null = null;
+  let polling = false;
   let pollTimer: number | null = null;
-
-  const stopPolling = () => {
-    if (pollTimer !== null) {
-      window.clearInterval(pollTimer);
-      pollTimer = null;
-    }
-  };
 
   const refreshFromServer = async () => {
     if (closed) return;
@@ -778,62 +771,49 @@ export function subscribeRoom(
     }
   };
 
-  const handleTimestamp = (rawTs: unknown) => {
-    if (rawTs === null) {
-      onStatus("error");
-      return;
-    }
-    const ts = Number(rawTs);
-    if (!Number.isFinite(ts) || ts <= 0) return;
-    onStatus("connected");
-    if (ts > lastSeenUpdatedAt) {
-      lastSeenUpdatedAt = ts;
-      void refreshFromServer();
-    }
+  const checkOnce = () => {
+    if (closed || polling || document.visibilityState === "hidden") return;
+    polling = true;
+    void rtdbRequest<unknown>(`${dbUrl}/rooms/${roomId}/updatedAt.json`, "GET")
+      .then((rawTs) => {
+        if (closed) return;
+        if (rawTs === null) {
+          onStatus("error");
+          return;
+        }
+        const ts = Number(rawTs);
+        if (!Number.isFinite(ts) || ts <= 0) return;
+        onStatus("connected");
+        if (ts > lastSeenUpdatedAt) {
+          lastSeenUpdatedAt = ts;
+          void refreshFromServer();
+        }
+      })
+      .catch(() => {
+        if (!closed) onStatus("reconnecting");
+      })
+      .finally(() => {
+        polling = false;
+      });
   };
 
-  const startPollingFallback = () => {
-    if (pollTimer !== null || closed) return;
-    pollTimer = window.setInterval(() => {
-      if (closed || document.visibilityState === "hidden") return;
-      void rtdbRequest<unknown>(`${dbUrl}/rooms/${roomId}/updatedAt.json`, "GET")
-        .then((res) => {
-          if (!closed) handleTimestamp(res);
-        })
-        .catch(() => {
-          if (!closed) onStatus("reconnecting");
-        });
-    }, 12_000);
-  };
+  // Use lightweight REST polling instead of EventSource SSE.
+  // Firebase RTDB counts SSE/WebSocket against the 100 simultaneous connections cap,
+  // whereas RESTful GET requests do NOT count as simultaneous connections.
+  onStatus("connected");
+  pollTimer = window.setInterval(checkOnce, 4_000);
 
-  if (typeof EventSource !== "undefined") {
-    // Subscribe ONLY to the 13-byte updatedAt timestamp — never re-download images on reconnect.
-    es = new EventSource(`${dbUrl}/rooms/${roomId}/updatedAt.json`);
-    es.addEventListener("put", (e) => {
-      try {
-        const payload = JSON.parse((e as MessageEvent<string>).data) as { data?: unknown };
-        handleTimestamp(payload.data);
-      } catch {
-        // ignore malformed event
-      }
-    });
-    es.onopen = () => {
-      if (closed) return;
-      stopPolling();
-      onStatus("connected");
-    };
-    es.onerror = () => {
-      if (closed) return;
-      onStatus("reconnecting");
-      startPollingFallback();
-    };
-  } else {
-    startPollingFallback();
-  }
+  const onVisibilityChange = () => {
+    if (document.visibilityState === "visible") checkOnce();
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
 
   return () => {
     closed = true;
-    es?.close();
-    stopPolling();
+    if (pollTimer !== null) {
+      window.clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    document.removeEventListener("visibilitychange", onVisibilityChange);
   };
 }
